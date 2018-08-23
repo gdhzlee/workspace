@@ -1,0 +1,64 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /sports
+redis:
+  host: 172.31.18.22
+spring:
+  redis:
+    lettuce:
+      pool:
+        max-active: 1000
+        max-wait: 5s
+        max-idle: 40
+        min-idle: 0
+    host: ${redis.host}
+    port: 6380
+    database: 0
+    timeout: 10s
+  #    cluster:
+  #      nodes[0]: ${redis.host}:6380
+  #      nodes[1]: ${redis.host}:6381
+  #      nodes[2]: ${redis.host}:6382
+  #      nodes[3]: ${redis.host}:6383
+  #      nodes[4]: ${redis.host}:6384
+  #      nodes[5]: ${redis.host}:6385
+
+  # 数据库连接池
+  datasource:
+    ip: 219.222.189.62
+    port: 3306
+    database: dgut_sport
+    username: root
+    password: zc161104
+    url: jdbc:mysql://${spring.datasource.ip}:${spring.datasource.port}/${spring.datasource.database}?characterEncoding=utf8&useSSL=false&useUnicode=true&allowMultiQueries=true&autoReconnect=true
+    hikari:
+      maximum-pool-size: 100
+      minimum-idle: 5
+      idle-timeout: 180000
+      auto-commit: true
+      pool-name: Hikari_Connection_Pool
+      max-lifetime: 1800000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+    type: com.zaxxer.hikari.HikariDataSource
+
+# xml文件映射
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+
+# SQL打印
+logging:
+  level:
+    com:
+      zemcho:
+        pe:
+          mapper: debug
+# 分页
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql
+  offset-as-page-num: true
+  row-bounds-with-count: true

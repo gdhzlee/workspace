@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.zemcho.pe.mapper.course.CourseMapper">
+
+
+    <select id="selectCourseList" resultType="com.zemcho.pe.controller.course.vo.CourseVO">
+        SELECT
+          e.year,
+          e.term,
+          b.id AS 'schId',
+          a.id AS 'courseId',
+          a.`name` AS 'courseName',
+          c.name AS 'courseSite',
+          a.campus AS 'courseCampus',
+          d.`name` AS 'teacherName',
+          b.limit_person AS 'limitPerson',
+          e.week_class_time AS 'weekClassTime',
+          a.sex,
+          b.section AS 'sectionTime'
+        FROM zc_sports_course AS a
+        INNER JOIN zc_sports_schedules AS b ON a.id = b.course_id
+        INNER JOIN zc_sports_site AS c ON a.site_id = c.id
+        INNER JOIN zc_user AS d ON b.teacher_uid = d.id
+        INNER JOIN zc_sports_config AS e
+    </select>
+
+    <select id="selectTimeList" resultType="com.zemcho.pe.controller.course.vo.SelectiveTimeVO">
+        select campus, start_time as 'start', start_time as 'startTime', end_time as 'end', end_time as 'endTime'
+        from zc_sports_config_selection_time
+        where is_gregory_date = #{isGregory} and config_id = #{configId}
+    </select>
+
+    <select id="selectConfigIdByYearAndTerm" resultType="java.lang.Integer">
+        select id
+        from zc_sports_config
+        where year = #{year} and term = #{term}
+    </select>
+</mapper>
