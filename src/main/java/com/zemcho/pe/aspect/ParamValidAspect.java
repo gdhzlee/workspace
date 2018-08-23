@@ -1,5 +1,6 @@
 package com.zemcho.pe.aspect;
 
+import com.zemcho.pe.common.Message;
 import com.zemcho.pe.common.Result;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -35,7 +36,14 @@ public class ParamValidAspect {
     @Around("(@within(org.springframework.web.bind.annotation.RestController) || @within(org.springframework.stereotype.Controller)) && args(..,result)")
     public Object paramValid(ProceedingJoinPoint point, BindingResult result) throws Throwable{
         if(result.hasErrors()){
-            return new Result(1001, result.getFieldError().getDefaultMessage());
+            String defaultMessage = result.getFieldError().getDefaultMessage();
+            Message message = Message.valueOf(defaultMessage);
+
+            if (message != null){
+                return new Result(message);
+            }
+
+            return new Result(1001, defaultMessage);
         }
 
         return point.proceed();

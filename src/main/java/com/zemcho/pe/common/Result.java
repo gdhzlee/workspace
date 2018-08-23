@@ -19,18 +19,18 @@ public class Result {
     private String msg;
 
     //具体的内容, total,pageNum,list
-    private Object data;
+    private Object info;
 
-    public Result(int code, String msg, Object data) {
+    public Result(int code, String msg, Object info) {
         this.code = code;
         this.msg = msg;
-        this.data = data;
+        this.info = info;
     }
 
     public Result(int code, String msg) {
         this.code = code;
         this.msg = msg;
-        this.data = new HashMap<>();
+        this.info = new HashMap<>();
     }
 
     public Result() {
@@ -40,13 +40,13 @@ public class Result {
     public Result(Message message){
         this.code = message.getCode();
         this.msg = message.getMessage();
-        this.data = -1;
+        this.info = -1;
     }
 
-    public Result(Message message, Object data){
+    public Result(Message message, Object info){
         this.code = message.getCode();
         this.msg = message.getMessage();
-        this.data = data;
+        this.info = info;
     }
 
 

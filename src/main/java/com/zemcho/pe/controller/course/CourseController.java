@@ -25,8 +25,8 @@ public class CourseController {
     }
 
     @PostMapping("/getUserInfo")
-    public Result getUserInfo(){
+    public Result getUserInfo(@RequestBody @Validated BasicDTO basicDTO, BindingResult result){
 
-        return null;
+        return courseService.getUserInfo(basicDTO);
     }
 }
