@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
 import java.sql.Date;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -12,7 +13,7 @@ import java.time.LocalDate;
 
 @Setter
 @Getter
-public class SelectiveTimeVO {
+public class SelectiveTimeVO  implements Serializable {
 
     private Long start;
 

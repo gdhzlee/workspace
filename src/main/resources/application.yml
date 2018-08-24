@@ -26,22 +26,26 @@ spring:
 
   # 数据库连接池
   datasource:
-    ip: 219.222.189.62
-    port: 3306
+    ip: 172.30.252.8
+    port: 3307
     database: dgut_sport
     username: root
     password: zc161104
     url: jdbc:mysql://${spring.datasource.ip}:${spring.datasource.port}/${spring.datasource.database}?characterEncoding=utf8&useSSL=false&useUnicode=true&allowMultiQueries=true&autoReconnect=true
     hikari:
-      maximum-pool-size: 100
+      maximum-pool-size: 5000
       minimum-idle: 5
-      idle-timeout: 180000
+      idle-timeout: 10000
       auto-commit: true
       pool-name: Hikari_Connection_Pool
       max-lifetime: 1800000
       connection-timeout: 30000
       connection-test-query: SELECT 1
     type: com.zaxxer.hikari.HikariDataSource
+  cache:
+    redis:
+      cache-null-values: true
+      time-to-live: 5m
 
 # xml文件映射
 mybatis:

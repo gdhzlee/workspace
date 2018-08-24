@@ -5,25 +5,31 @@ import lombok.Setter;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.cache.RedisCacheConfiguration;
+import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.GenericToStringSerializer;
+import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import java.time.Duration;
 import java.util.List;
 
 @Configuration
 @ConfigurationProperties(prefix = "spring.redis.cluster")
-@Getter
-@Setter
 @AutoConfigureAfter(RedisAutoConfiguration.class)
+@EnableCaching
 public class RedisConfig {
 
     /* 集群 */
-
+    @Getter
+    @Setter
     private List<String> nodes;
 
 //    @Value("${spring.redis.pool.max-idle}")
@@ -78,6 +84,18 @@ public class RedisConfig {
 //        objectRedisTemplate.setValueSerializer(new GenericToStringSerializer<>(Integer.class));
 //
 //        return objectRedisTemplate;
+//    }
+//
+//    @Bean
+//    public CacheManager cacheManager(LettuceConnectionFactory factory){
+//        RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+//                .entryTtl(Duration.ofMinutes(5))
+//                .disableCachingNullValues()
+////                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))
+////                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+//                ;
+//
+//        return RedisCacheManager.builder(factory).cacheDefaults(cacheConfig).build();
 //    }
 
     /* 单例 */

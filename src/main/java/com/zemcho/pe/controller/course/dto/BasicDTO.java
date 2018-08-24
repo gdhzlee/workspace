@@ -13,12 +13,16 @@ public class BasicDTO {
 
     @JsonProperty(value = "page")
     @Min(value = 1, message = "ERR_PAGE_PARAM")
-    private int page = 1;
+    private Integer page = 1;
 
     @JsonProperty(value = "page_rows")
     @Min(value = 1, message = "ERR_PAGE_PARAM")
-    private int pageRows = 8;
+    private Integer pageRows = 8;
 
     @JsonProperty(value = "user_number")
-    private String userNumber;
+    private String userNumber = "";
+
+    private Integer year;
+
+    private Integer term;
 }

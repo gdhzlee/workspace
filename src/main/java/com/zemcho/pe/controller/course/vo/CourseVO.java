@@ -1,12 +1,15 @@
 package com.zemcho.pe.controller.course.vo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.zemcho.pe.config.InitialConfig;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.Serializable;
+
 @Setter
 @Getter
-public class CourseVO {
+public class CourseVO  implements Serializable {
 
     @JsonProperty(value = "year")
     private int year;
@@ -42,7 +45,7 @@ public class CourseVO {
     private int sex;
 
     @JsonProperty(value = "section_time")
-    private String sectionTime;
+    private Integer sectionTime;
 
     @JsonProperty(value = "week_class_time")
     private String weekClassTime;
@@ -57,5 +60,13 @@ public class CourseVO {
         }else {
             return "-";
         }
+    }
+
+    public String getSectionTime(){
+        return InitialConfig.SECTION_TIME.get(sectionTime);
+    }
+
+    public String getWeekClassTime(){
+        return "[" + weekClassTime.replace(",","-") + "]周";
     }
 }

@@ -21,6 +21,10 @@ public enum Message {
     ERR_NOT_AUTH(1005,"无权限访问"),
     ERR_PAGE_PARAM(1006,"分页参数错误"),
     ERR_INCOMPLETE_DATA(1007,"数据不完善，请联系管理员"),
+    ERR_NOT_SCHEDULES(1008,"缺少排课ID"),
+    ERR_NOT_PHONE(1009,"缺少联系方式"),
+    ERR_COURSE_NOT_ENOUGH(1010,"课程可选数不足"),
+    ERR_COURSE_SELECT(1011,"选课失败"),
     ;
 
     private int code;

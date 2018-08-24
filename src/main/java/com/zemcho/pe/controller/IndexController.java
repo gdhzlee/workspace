@@ -1,7 +1,6 @@
 package com.zemcho.pe.controller;
 
 import com.zemcho.pe.common.Result;
-import com.zemcho.pe.mapper.course.CourseMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.support.atomic.RedisAtomicInteger;
@@ -54,7 +53,7 @@ public class IndexController {
 
     private static AtomicInteger count = new AtomicInteger(0);
 
-    public final static Semaphore semaphore = new Semaphore(10);
+//    public final static Semaphore semaphore = new Semaphore(10);
 
     @GetMapping("/course/take")
     public Result takeCourse(@RequestParam(name = "key") String key){
@@ -74,16 +73,6 @@ public class IndexController {
         System.out.println(message);
 
         return new Result(code, message);
-    }
-
-
-    @Autowired
-    CourseMapper courseMapper;
-
-    @GetMapping("/course/list")
-    public Result getCourseList(){
-
-        return new Result(1000, "SUCCESS", courseMapper.selectCourseList());
     }
 
 //    @GetMapping("test")

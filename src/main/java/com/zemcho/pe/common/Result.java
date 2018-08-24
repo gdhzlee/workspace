@@ -3,6 +3,7 @@ package com.zemcho.pe.common;
 import com.github.pagehelper.PageInfo;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.*;
 
@@ -10,7 +11,7 @@ import java.util.*;
  * http请求返回的最外层对象
  */
 @Data
-public class Result {
+public class Result implements Serializable {
 
     //错误码
     private int code;
