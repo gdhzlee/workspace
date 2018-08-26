@@ -10,6 +10,7 @@ import com.zemcho.pe.controller.course.dto.SelectCourseDTO;
 import com.zemcho.pe.controller.course.vo.CourseVO;
 import com.zemcho.pe.controller.course.vo.SelectiveTimeVO;
 import com.zemcho.pe.controller.course.vo.UserInfoVO;
+import com.zemcho.pe.entity.course.TakeCourseRecord;
 import com.zemcho.pe.mapper.course.CourseMapper;
 import com.zemcho.pe.service.course.ICourseService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import javax.validation.constraints.NotBlank;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +99,24 @@ public class CourseService implements ICourseService {
             semaphore.release();
 
             //保存选课记录到队列里面，延迟插入数据库，还是直接插？
+            Long now = System.currentTimeMillis() / 1000;
+            TakeCourseRecord record = new TakeCourseRecord();
 
+            record.setYear(InitialConfig.YEAR);
+            record.setTerm(InitialConfig.TERM);
+            record.setUid(9990999);
+            record.setSchId(1010101);
+            record.setClassId(12021);
+            record.setPhone(phone);
+            record.setRemark("我是备注");
+            record.setOperateType(1);
+            record.setCreateTime(now);
+            record.setUpdateTime(now);
+            record.setStatus(1);
+            record.setIsDel(false);
+            record.setExemptStatus(0);
+
+            courseMapper.saveTakeSourceRecord(Arrays.asList(record));
             return new Result(Message.SU_COURSE_SELECT);
 
         } catch (InterruptedException e) {

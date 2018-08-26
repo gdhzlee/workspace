@@ -4,45 +4,76 @@
 
 
     <select id="selectCourseList" resultType="com.zemcho.pe.controller.course.vo.CourseVO">
-        SELECT e.year,
-               e.term,
-               b.id              AS 'schId',
-               a.id              AS 'courseId',
-               a.`name`          AS 'courseName',
-               c.name            AS 'courseSite',
-               a.campus          AS 'courseCampus',
-               d.`name`          AS 'teacherName',
-               b.limit_person    AS 'limitPerson',
-               e.week_class_time AS 'weekClassTime',
-               a.sex,
-               b.section         AS 'sectionTime'
+        SELECT
+            e.year,
+            e.term,
+            b.id              AS 'schId',
+            a.id              AS 'courseId',
+            a.`name`          AS 'courseName',
+            c.name            AS 'courseSite',
+            a.campus          AS 'courseCampus',
+            d.`name`          AS 'teacherName',
+            b.limit_person    AS 'limitPerson',
+            e.week_class_time AS 'weekClassTime',
+            a.sex,
+            b.section         AS 'sectionTime'
         FROM zc_sports_course AS a
-                 INNER JOIN zc_sports_schedules AS b ON a.id = b.course_id
-                 INNER JOIN zc_sports_site AS c ON a.site_id = c.id
-                 INNER JOIN zc_user AS d ON b.teacher_uid = d.id
-                 INNER JOIN zc_sports_config AS e ON e.year = #{year} AND e.term = #{term}
+            INNER JOIN zc_sports_schedules AS b ON a.id = b.course_id
+            INNER JOIN zc_sports_site AS c ON a.site_id = c.id
+            INNER JOIN zc_user AS d ON b.teacher_uid = d.id
+            INNER JOIN zc_sports_config AS e ON e.year = #{year} AND e.term = #{term}
     </select>
 
     <select id="selectTimeList" resultType="com.zemcho.pe.controller.course.vo.SelectiveTimeVO">
-        select campus, start_time as 'start', start_time as 'startTime', end_time as 'end', end_time as 'endTime'
-        from zc_sports_config_selection_time
-        where is_gregory_date = #{isGregory}
-          and config_id = #{configId}
+        SELECT
+            campus,
+            start_time AS 'start',
+            start_time AS 'startTime',
+            end_time   AS 'end',
+            end_time   AS 'endTime'
+        FROM zc_sports_config_selection_time
+        WHERE is_gregory_date = #{isGregory}
+              AND config_id = #{configId}
     </select>
 
     <select id="selectConfigIdByYearAndTerm" resultType="java.lang.Integer">
         SELECT id
         FROM zc_sports_config
         WHERE year = #{year}
-          AND term = #{term}
+              AND term = #{term}
     </select>
 
     <select id="selectCourseCountByYearAndTerm" resultType="com.zemcho.pe.controller.course.vo.CourseCountVO">
-        SELECT b.id AS 'courseId', b.limit_person AS 'count'
+        SELECT
+            b.id           AS 'courseId',
+            b.limit_person AS 'count'
         FROM zc_sports_course AS a
-                 INNER JOIN zc_sports_schedules AS b ON a.id = b.course_id
-                 INNER JOIN zc_sports_site AS c ON a.site_id = c.id
-                 INNER JOIN zc_user AS d ON b.teacher_uid = d.id
+            INNER JOIN zc_sports_schedules AS b ON a.id = b.course_id
+            INNER JOIN zc_sports_site AS c ON a.site_id = c.id
+            INNER JOIN zc_user AS d ON b.teacher_uid = d.id
         ORDER BY b.id
+    </select>
+
+    <select id="saveTakeSourceRecord" resultType="java.lang.Integer">
+        INSERT INTO zc_sports_stu_success_sch(year, term, uid, sch_id, class_id, phone, remark, operate_type,
+        create_time, update_time, status, is_del, exempt_status)
+        VALUES
+        <foreach collection="records" item="record" separator=",">
+            (
+            #{record.year},
+            #{record.term},
+            #{record.uid},
+            #{record.schId},
+            #{record.classId},
+            #{record.phone},
+            #{record.remark},
+            #{record.operateType},
+            #{record.createTime},
+            #{record.updateTime},
+            #{record.status},
+            #{record.isDel},
+            #{record.exemptStatus}
+            )
+        </foreach>
     </select>
 </mapper>

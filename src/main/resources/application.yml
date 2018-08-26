@@ -26,8 +26,8 @@ spring:
 
   # 数据库连接池
   datasource:
-    ip: 172.30.252.8
-    port: 3307
+    ip: 219.222.189.62
+    port: 3306
     database: dgut_sport
     username: root
     password: zc161104
@@ -42,10 +42,16 @@ spring:
       connection-timeout: 30000
       connection-test-query: SELECT 1
     type: com.zaxxer.hikari.HikariDataSource
+
+  # 缓存
   cache:
     redis:
       cache-null-values: true
       time-to-live: 5m
+
+  # 关闭jmx资源管理器
+  jmx:
+    enabled: false
 
 # xml文件映射
 mybatis:
