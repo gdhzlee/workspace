@@ -8,14 +8,15 @@ spring:
   redis:
     lettuce:
       pool:
-        max-active: 1000
+        max-active: 20000
         max-wait: 5s
         max-idle: 40
         min-idle: 0
     host: ${redis.host}
     port: 6380
     database: 0
-    timeout: 10s
+    timeout: 3s
+    password: zc@redis.161104
   #    cluster:
   #      nodes[0]: ${redis.host}:6380
   #      nodes[1]: ${redis.host}:6381
@@ -28,6 +29,8 @@ spring:
   datasource:
     ip: 219.222.189.62
     port: 3306
+#    ip: 172.30.252.9
+#    port: 3307
     database: dgut_sport
     username: root
     password: zc161104
@@ -37,17 +40,17 @@ spring:
       minimum-idle: 5
       idle-timeout: 10000
       auto-commit: true
-      pool-name: Hikari_Connection_Pool
+      #pool-name: Hikari_Connection_Pool
       max-lifetime: 1800000
       connection-timeout: 30000
       connection-test-query: SELECT 1
     type: com.zaxxer.hikari.HikariDataSource
 
-  # 缓存
-  cache:
-    redis:
-      cache-null-values: true
-      time-to-live: 5m
+#  # 缓存
+#  cache:
+#    redis:
+#      cache-null-values: true
+#      time-to-live: 5m
 
   # 关闭jmx资源管理器
   jmx:

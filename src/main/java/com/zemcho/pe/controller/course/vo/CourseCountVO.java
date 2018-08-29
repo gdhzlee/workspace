@@ -7,7 +7,7 @@ import lombok.Setter;
 @Getter
 public class CourseCountVO {
 
-    private String courseId;
+    private Integer courseId;
 
     private Integer count;
 }

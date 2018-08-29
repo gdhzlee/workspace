@@ -17,4 +17,8 @@ public class SelectCourseDTO {
 
     @NotBlank(message = "ERR_NOT_PHONE")
     private String phone;
+
+    @JsonProperty("user_number")
+    @NotNull(message = "ERR_NOT_USER_NUMBER")
+    private String userNumber;
 }

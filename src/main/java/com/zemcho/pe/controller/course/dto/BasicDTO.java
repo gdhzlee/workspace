@@ -22,7 +22,7 @@ public class BasicDTO {
     @JsonProperty(value = "user_number")
     private String userNumber = "";
 
-    private Integer year;
-
-    private Integer term;
+//    private Integer year;
+//
+//    private Integer term;
 }

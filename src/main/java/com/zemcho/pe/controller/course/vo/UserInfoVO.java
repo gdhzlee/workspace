@@ -15,6 +15,8 @@ public class UserInfoVO implements Serializable {
 
     private List<SelectiveTimeVO> second;
 
+    private Integer uid;
+
     private String username;
 
     private String name;

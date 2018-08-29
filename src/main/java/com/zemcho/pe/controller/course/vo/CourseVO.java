@@ -11,6 +11,8 @@ import java.io.Serializable;
 @Getter
 public class CourseVO  implements Serializable {
 
+    private int classId;
+
     @JsonProperty(value = "year")
     private int year;
 
@@ -42,28 +44,29 @@ public class CourseVO  implements Serializable {
     private int remaining;
 
     @JsonProperty(value = "sex")
-    private int sex;
+    private String sex;
 
     @JsonProperty(value = "section_time")
-    private Integer sectionTime;
+    private String sectionTime;
 
     @JsonProperty(value = "week_class_time")
     private String weekClassTime;
 
     public String getSex(){
-        if (sex == 1){
+        if ("1".equals(sex)){
             return "男";
-        }else if (sex == 2){
+        }else if ("2".equals(sex)){
             return "女";
-        }else if (sex == 3){
+        }else if ("3".equals(sex)){
             return "不限";
         }else {
-            return "-";
+            return sex;
         }
     }
 
     public String getSectionTime(){
-        return InitialConfig.SECTION_TIME.get(sectionTime);
+        String s = InitialConfig.SECTION_TIME.get(sectionTime);
+        return s == null ? sectionTime : s;
     }
 
     public String getWeekClassTime(){

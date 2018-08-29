@@ -21,6 +21,28 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 import java.time.Duration;
 import java.util.List;
 
+/**
+ * Redis配置
+ *
+ * @Author Jetvin
+ * @Date 2018/8/29
+ * @Time 17:13
+ * @Version ╮(╯▽╰)╭
+ *
+ * <!--         ░░░░░░░░░░░░░░░░░░░░░░░░▄░░░        -->
+ * <!--         ░░░░░░░░░▐█░░░░░░░░░░░▄▀▒▌░░        -->
+ * <!--         ░░░░░░░░▐▀▒█░░░░░░░░▄▀▒▒▒▐ ░        -->
+ * <!--         ░░░░░░░▐▄▀▒▒▀▀▀▀▄▄▄▀▒▒▒▒▒▐░░        -->
+ * <!--         ░░░░░▄▄▀▒░▒▒▒▒▒▒▒▒▒█▒▒▄█▒▐ ░        -->
+ * <!--         ░░░▄▀▒▒▒░░░▒▒▒░░░▒▒▒▀██▀▒▌░░        -->
+ * <!--         ░░▐▒▒▒▄▄▒▒▒▒░░░▒▒▒▒▒▒▒▀▄▒▒ ░        -->
+ * <!--         ░░▌░░▌█▀▒▒▒▒▒▄▀█▄▒▒▒▒▒▒▒█▒▐░        -->
+ * <!--         ░▐░░░▒▒▒▒▒▒▒▒▌██▀▒▒░░░▒▒▒▀▄░        -->
+ * <!--         -░▌░▒▄██▄▒▒▒▒▒▒▒▒▒░░░░░░▒▒▒▒        -->
+ * <!--         ▀▒▀▐▄█▄█▌▄░▀▒▒░░░░░░░░░░▒▒▒░        -->
+ * <!--                                             -->
+ * <!--                 咦！有人在改BUG               -->
+ */
 @Configuration
 @ConfigurationProperties(prefix = "spring.redis.cluster")
 @AutoConfigureAfter(RedisAutoConfiguration.class)
@@ -86,17 +108,17 @@ public class RedisConfig {
 //        return objectRedisTemplate;
 //    }
 //
-//    @Bean
-//    public CacheManager cacheManager(LettuceConnectionFactory factory){
-//        RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
-//                .entryTtl(Duration.ofMinutes(5))
-//                .disableCachingNullValues()
-////                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))
-////                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-//                ;
-//
-//        return RedisCacheManager.builder(factory).cacheDefaults(cacheConfig).build();
-//    }
+    @Bean
+    public CacheManager cacheManager(LettuceConnectionFactory factory){
+        RedisCacheConfiguration cacheConfig = RedisCacheConfiguration.defaultCacheConfig()
+                .entryTtl(Duration.ofMinutes(5))
+                .disableCachingNullValues()
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(new GenericJackson2JsonRedisSerializer()))
+                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
+                ;
+
+        return RedisCacheManager.builder(factory).cacheDefaults(cacheConfig).build();
+    }
 
     /* 单例 */
 
