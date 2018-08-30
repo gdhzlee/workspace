@@ -15,7 +15,7 @@ public enum Message {
     ERR_SERVER_HTTP_MESSAGE_NOT_READABLE(1001,"请求缺少body"),
     ERR_SERVER_HTTP_REQUEST_METHOD_NOT_SUPPORTED(1001,"请求方式不支持"),
     ERR_SERVER_EXCEPTION(1001,"服务器处理异常，请联系管理员"),
-    ERR_NOT_STUDENT(1002,"学生不存在"),
+    ERR_NOT_STUDENT(1002,"学生不存在或学生不在选课范围"),
     ERR_NOT_TEACHER(1003,"教师不存在"),
     ERR_NOT_LOGIN(1004,"用户未登录"),
     ERR_NOT_AUTH(1005,"无权限访问"),
@@ -33,6 +33,8 @@ public enum Message {
     ERR_COURSE_DISABLE_SELECTED(1017,"课程不满足选课要求"),
     ERR_NOT_SELECTIVE_TIME(1018,"非选课时间段，不可进行选课操作"),
     ERR_NOT_OPEN_TIME(1019,"非选课时间段，系统未开放"),
+    ERR_ERROR_AUTHORIZATION_VALUE(1020,"用户认证信息的值错误，请联系管理员"),
+    ERR_ERROR_AUTHORIZATION_RELATIVE(1021,"用户认证信息与学号匹配错误"),
     ;
 
     private int code;

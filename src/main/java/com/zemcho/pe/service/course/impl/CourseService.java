@@ -6,13 +6,18 @@ import com.zemcho.pe.common.Result;
 import com.zemcho.pe.config.InitialConfig;
 import com.zemcho.pe.controller.course.dto.BasicDTO;
 import com.zemcho.pe.controller.course.dto.CancelDTO;
+import com.zemcho.pe.controller.course.dto.SaveDataDTO;
 import com.zemcho.pe.controller.course.dto.SelectCourseDTO;
 import com.zemcho.pe.controller.course.vo.CourseVO;
 import com.zemcho.pe.controller.course.vo.SelectCourseRecordVO;
 import com.zemcho.pe.controller.course.vo.UserInfoVO;
-import com.zemcho.pe.entity.course.TakeCourseRecord;
+import com.zemcho.pe.entity.course.CourseResults;
+import com.zemcho.pe.entity.course.FormLog;
+import com.zemcho.pe.entity.course.SelectCourseLog;
+import com.zemcho.pe.entity.course.SelectCourseRecord;
 import com.zemcho.pe.mapper.course.CourseMapper;
 import com.zemcho.pe.service.course.ICourseService;
+import com.zemcho.pe.util.IpAddressUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,9 +25,12 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.support.atomic.RedisAtomicInteger;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import javax.servlet.http.HttpServletRequest;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -45,21 +53,30 @@ public class CourseService implements ICourseService {
 
     public final static Semaphore semaphore = new Semaphore(1);
 
+    public static ExecutorService executorService = Executors.newCachedThreadPool();
+
     @Override
     public Result getCourseList(BasicDTO basicDTO) {
 
         Integer page = basicDTO.getPage();
         Integer pageRows = basicDTO.getPageRows();
         String userNumber = basicDTO.getUserNumber();
+        HttpServletRequest request = basicDTO.getRequest();
 
         // 判断用户是否存在
-        UserInfoVO userInfoVO = (UserInfoVO) objectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
-        if (userInfoVO == null) {
+        UserInfoVO userInfo = (UserInfoVO) objectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
+        if (userInfo == null) {
             return new Result(Message.ERR_NOT_STUDENT);
         }
 
+        // 校验用户认证与学号的匹配
+        Integer uid = (Integer) request.getAttribute("uid");
+        if (!userInfo.getUid().equals(uid)){
+            return new Result(Message.ERR_ERROR_AUTHORIZATION_RELATIVE);
+        }
+
         // 获取对应班级的课表
-        Integer classId = userInfoVO.getClassId();
+        Integer classId = userInfo.getClassId();
         PageInfo<CourseVO> pageInfo = thisSelf.getCourseList(classId, page, pageRows);
         List<CourseVO> list = pageInfo.getList();
 
@@ -85,18 +102,26 @@ public class CourseService implements ICourseService {
         String phone = selectCourseDTO.getPhone();
         Integer schId = selectCourseDTO.getSchId();
         String userNumber = selectCourseDTO.getUserNumber();
+        HttpServletRequest request = selectCourseDTO.getRequest();
 
         // 判断用户是否存在
         UserInfoVO userInfo = (UserInfoVO) objectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
-        if (userInfo == null){
+        if (userInfo == null) {
             return new Result(Message.ERR_NOT_STUDENT);
+        }
+
+        // 校验用户认证与学号的匹配
+        Integer uid = (Integer) request.getAttribute("uid");
+        if (!userInfo.getUid().equals(uid)){
+            return new Result(Message.ERR_ERROR_AUTHORIZATION_RELATIVE);
         }
 
         // 判断课程是否符合选课要求
         Integer classId = userInfo.getClassId();
+        log.info("classId:{}", classId);
         List<CourseVO> courses = (List<CourseVO>) objectRedisTemplate.opsForValue().get(InitialConfig.CLASS_SCHEDULES_PREFIX + classId);
-        long schIdCount = courses.parallelStream().filter(c -> c.getSchId() == schId).count();
-        if (schIdCount == 0){
+        List<CourseVO> collect = courses.parallelStream().filter(c -> c.getSchId().equals(schId)).collect(Collectors.toList());
+        if (collect.size() == 0){
             return new Result(Message.ERR_COURSE_DISABLE_SELECTED);
         }
 
@@ -144,25 +169,25 @@ public class CourseService implements ICourseService {
             return new Result(Message.ERR_COURSE_SELECT);
         }
 
-        //保存选课记录到队列里面，延迟插入数据库，还是直接插？
-        Long now = System.currentTimeMillis() / 1000;
-        TakeCourseRecord record = new TakeCourseRecord();
+        //TODO 开线程执行保存数据
+        Integer campus = userInfo.getCampus();
+        Integer faculty = userInfo.getFaculty();
+        CourseVO courseVO = collect.get(0);
+        Integer courseId = courseVO.getCourseId();
+        Integer teacherId = courseVO.getTeacherId();
 
-        record.setYear(InitialConfig.YEAR);
-        record.setTerm(InitialConfig.TERM);
-        record.setUid(userInfo.getUid());
-        record.setSchId(schId);
-        record.setClassId(classId);
-        record.setPhone(phone);
-        record.setRemark("");
-        record.setOperateType(1);
-        record.setCreateTime(now);
-        record.setUpdateTime(now);
-        record.setStatus(1);
-        record.setIsDel(false);
-        record.setExemptStatus(0);
+        SaveDataDTO saveDataDTO = new SaveDataDTO();
+        saveDataDTO.setRequest(request);
+        saveDataDTO.setUid(uid);
+        saveDataDTO.setSchId(schId);
+        saveDataDTO.setClassId(classId);
+        saveDataDTO.setPhone(phone);
+        saveDataDTO.setCampus(campus);
+        saveDataDTO.setCourseId(courseId);
+        saveDataDTO.setTeacherId(teacherId);
+        saveDataDTO.setFaculty(faculty);
+        executorService.execute(() -> saveData(saveDataDTO));
 
-        courseMapper.saveTakeSourceRecord(Arrays.asList(record));
         log.info("-------------选课流程结束 - 正常-------------");
         return new Result(Message.SU_COURSE_SELECT);
     }
@@ -180,7 +205,7 @@ public class CourseService implements ICourseService {
         }
 
         // 判断选课记录是否存在；注：退选后记录与归属与不存在
-        SelectCourseRecordVO selectCourseRecordVO = courseMapper.selectSelectedCourceRecord(uid, id);
+        SelectCourseRecordVO selectCourseRecordVO = courseMapper.selectSelectedCourseRecord(uid, id);
         if (selectCourseRecordVO == null) {
             return new Result(Message.ERR_NOT_COURSE_RECORD);
         }
@@ -207,11 +232,20 @@ public class CourseService implements ICourseService {
 
     @Override
     public Result getUserInfo(BasicDTO basicDTO) {
+        HttpServletRequest request = basicDTO.getRequest();
         String userNumber = basicDTO.getUserNumber();
 
+        // 判断用户是否存在
         UserInfoVO userInfo = (UserInfoVO) objectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
-        if (userInfo == null){
+        if (userInfo == null) {
             return new Result(Message.ERR_NOT_STUDENT);
+        }
+
+        // 校验用户认证与学号的匹配
+        Integer uid = (Integer) request.getAttribute("uid");
+        System.out.println(uid);
+        if (!userInfo.getUid().equals(uid)){
+            return new Result(Message.ERR_ERROR_AUTHORIZATION_RELATIVE);
         }
 
         return new Result(Message.SU_STUDENT_INFO, userInfo);
@@ -247,4 +281,72 @@ public class CourseService implements ICourseService {
 
         return pageInfo;
     }
+
+    private void saveData(SaveDataDTO saveDataDTO){
+
+        HttpServletRequest request = saveDataDTO.getRequest();
+        Integer uid = saveDataDTO.getUid();
+        Integer schId = saveDataDTO.getSchId();
+        Integer classId = saveDataDTO.getClassId();
+        String phone = saveDataDTO.getPhone();
+        Integer campus = saveDataDTO.getCampus();
+        Integer courseId = saveDataDTO.getCourseId();
+        Integer teacherId = saveDataDTO.getTeacherId();
+        Integer faculty = saveDataDTO.getFaculty();
+
+        // TODO 保存选课记录
+        Long now = System.currentTimeMillis() / 1000;
+        SelectCourseRecord record = new SelectCourseRecord();
+
+        record.setYear(InitialConfig.YEAR);
+        record.setTerm(InitialConfig.TERM);
+        record.setUid(uid);
+        record.setSchId(schId);
+        record.setClassId(classId);
+        record.setPhone(phone);
+        record.setRemark("");
+        record.setOperateType(1);
+        record.setCreateTime(now);
+        record.setUpdateTime(now);
+        record.setStatus(1);
+        record.setIsDel(false);
+        record.setExemptStatus(0);
+        courseMapper.saveSelectSourceRecord(record);
+
+        // TODO 保存选课日志
+        String ip = IpAddressUtil.getIp(request);
+        SelectCourseLog selectCourseLog = new SelectCourseLog();
+        selectCourseLog.setUid(uid);
+        selectCourseLog.setSchId(schId);
+        selectCourseLog.setIp(ip);
+        selectCourseLog.setCreateTime(now);
+        selectCourseLog.setUpdateTime(now);
+        courseMapper.saveSelectCourseLog(selectCourseLog);
+
+        // TODO 保存成绩记录
+        CourseResults courseResults = new CourseResults();
+        courseResults.setYear(InitialConfig.YEAR);
+        courseResults.setTerm(InitialConfig.TERM);
+        courseResults.setCampus(campus);
+        courseResults.setUid(uid);
+        courseResults.setCourseId(courseId);
+        courseResults.setTeacherId(teacherId);
+        courseResults.setCreateTime(now);
+        courseResults.setUpdateTime(now);
+        courseMapper.saveCourseResults(courseResults);
+
+        // TODO 更新上课班级人数(这个定时更新)
+
+        // TODO 保存大厅事务
+        Integer dataId = record.getId();
+        FormLog formLog = new FormLog();
+        formLog.setFormId(InitialConfig.FORM_ID);
+        formLog.setDataId(dataId);
+        formLog.setUid(uid);
+        formLog.setFaculty(faculty);
+        formLog.setCreateTime(now);
+        formLog.setUpdateTime(now);
+        courseMapper.saveFormLog(formLog);
+    }
+
 }

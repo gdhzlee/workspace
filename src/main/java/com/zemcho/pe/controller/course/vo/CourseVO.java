@@ -14,16 +14,16 @@ public class CourseVO  implements Serializable {
     private int classId;
 
     @JsonProperty(value = "year")
-    private int year;
+    private Integer year;
 
     @JsonProperty(value = "term")
-    private int term;
+    private Integer term;
 
     @JsonProperty(value = "sch_id")
-    private int schId;
+    private Integer schId;
 
     @JsonProperty(value = "course_id")
-    private int courseId;
+    private Integer courseId;
 
     @JsonProperty(value = "course_name")
     private String courseName;
@@ -32,16 +32,19 @@ public class CourseVO  implements Serializable {
     private String courseSite;
 
     @JsonProperty(value = "course_campus")
-    private int courseCampus;
+    private Integer courseCampus;
 
     @JsonProperty(value = "teacher_name")
     private String teacherName;
 
+    @JsonProperty(value = "teacher_id")
+    private Integer teacherId;
+
     @JsonProperty(value = "limit_person")
-    private int limitPerson;
+    private Integer limitPerson;
 
     @JsonProperty(value = "remaining")
-    private int remaining;
+    private Integer remaining;
 
     @JsonProperty(value = "sex")
     private String sex;

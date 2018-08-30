@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
@@ -21,4 +22,6 @@ public class SelectCourseDTO {
     @JsonProperty("user_number")
     @NotNull(message = "ERR_NOT_USER_NUMBER")
     private String userNumber;
+
+    HttpServletRequest request;
 }

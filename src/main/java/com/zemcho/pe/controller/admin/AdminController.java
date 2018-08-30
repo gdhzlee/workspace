@@ -3,6 +3,7 @@ package com.zemcho.pe.controller.admin;
 import com.zemcho.pe.config.InitialConfig;
 import com.zemcho.pe.mapper.course.CourseMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,6 +13,9 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminController {
     @Autowired
     CourseMapper courseMapper;
+
+    @Autowired
+    RedisTemplate<String,String> stringRedisTemplate;
 
     @GetMapping("/load/preview")
     public void loadPreviewTime(){
@@ -39,5 +43,12 @@ public class AdminController {
     @GetMapping("/load/term")
     public void loadTerm(){
 
+    }
+
+    @GetMapping("/token")
+    public void token(String token) throws Exception{
+
+        token =  stringRedisTemplate.opsForValue().get("ehall_zc_session_" + token);
+        System.out.println(token);
     }
 }

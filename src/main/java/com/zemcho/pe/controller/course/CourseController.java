@@ -10,6 +10,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * 体育选课
  *
@@ -47,13 +49,15 @@ public class CourseController {
      * @return
      */
     @PostMapping("/getCourseList")
-    public Result getCourseList(@RequestBody @Validated BasicDTO basicDTO, BindingResult result){
+    public Result getCourseList(HttpServletRequest request, @RequestBody @Validated BasicDTO basicDTO, BindingResult result){
 
+        basicDTO.setRequest(request);
         return courseService.getCourseList(basicDTO);
     }
 
     @GetMapping("/getCourseList")
     public Result getCourseList(BasicDTO basicDTO){
+
         return courseService.getCourseList(basicDTO);
     }
 
@@ -64,8 +68,9 @@ public class CourseController {
      * @return
      */
     @PostMapping("/selectCourse")
-    public Result selectCourse(@RequestBody @Validated SelectCourseDTO selectCourseDTO, BindingResult result){
+    public Result selectCourse(HttpServletRequest request, @RequestBody @Validated SelectCourseDTO selectCourseDTO, BindingResult result){
 
+        selectCourseDTO.setRequest(request);
         return courseService.selectCourse(selectCourseDTO);
     }
 
@@ -91,8 +96,9 @@ public class CourseController {
      * @return
      */
     @PostMapping("/getUserInfo")
-    public Result getUserInfo(@RequestBody @Validated BasicDTO basicDTO, BindingResult result){
+    public Result getUserInfo(HttpServletRequest request, @RequestBody @Validated BasicDTO basicDTO, BindingResult result){
 
+        basicDTO.setRequest(request);
         return courseService.getUserInfo(basicDTO);
     }
 }

@@ -13,7 +13,7 @@ spring:
         max-idle: 40
         min-idle: 0
     host: ${redis.host}
-    port: 6380
+    port: 6381
     database: 0
     timeout: 3s
     password: zc@redis.161104

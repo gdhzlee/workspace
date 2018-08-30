@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 
@@ -22,7 +23,5 @@ public class BasicDTO {
     @JsonProperty(value = "user_number")
     private String userNumber = "";
 
-//    private Integer year;
-//
-//    private Integer term;
+    HttpServletRequest request;
 }

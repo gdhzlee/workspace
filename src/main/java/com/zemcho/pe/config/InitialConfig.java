@@ -77,6 +77,7 @@ public class InitialConfig {
         }
     };
 
+    private final static String FORM_CODE = "sports_course_select";
     public final static String SCHEDULE_PREFIX = "schedule:";
     public final static String USER_INFO_PREFIX = "user_info:";
     public final static String CLASS_SCHEDULES_PREFIX = "class_schedules:";
@@ -85,9 +86,10 @@ public class InitialConfig {
     public static List<SelectiveTimeVO> TOTAL = new ArrayList<>();
     public static List<SelectiveTimeVO> FIRST = new ArrayList<>();
     public static List<SelectiveTimeVO> SECOND = new ArrayList<>();
+    public static PreviewTimeVO PREVIEW_TIME;
     public static Integer TERM = getTerm();
     public static Integer YEAR = getYear(TERM);
-    public static PreviewTimeVO PREVIEW_TIME;
+    public static Integer FORM_ID = 0;
 
     @Autowired
     CourseMapper courseMapper;
@@ -153,7 +155,15 @@ public class InitialConfig {
     /* 初始化预览时间 */
     @PostConstruct
     private void initPreviewTime(){
+
         PREVIEW_TIME = courseMapper.selectPreviewTimeByYearAndTerm(YEAR,TERM);
+    }
+
+    /* 初始化预览时间 */
+    @PostConstruct
+    private void initFormId(){
+
+        FORM_ID = courseMapper.selectFormIdByCode(FORM_CODE);
     }
 
     /* 定时修改学年学期 */
@@ -185,7 +195,7 @@ public class InitialConfig {
         LocalDate now = LocalDate.now();
 
         int monthValue = now.getMonthValue();
-        if (monthValue == 1 || monthValue >= 8) {
+        if (monthValue <=2 || monthValue >= 8) {
             return 1;
         } else {
             return 2;
