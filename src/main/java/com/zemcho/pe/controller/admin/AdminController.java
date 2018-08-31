@@ -17,6 +17,9 @@ public class AdminController {
     @Autowired
     RedisTemplate<String,String> stringRedisTemplate;
 
+    @Autowired
+    InitialConfig initialConfig;
+
     @GetMapping("/load/preview")
     public void loadPreviewTime(){
         InitialConfig.PREVIEW_TIME = courseMapper.selectPreviewTimeByYearAndTerm(InitialConfig.YEAR,InitialConfig.TERM);
@@ -35,20 +38,18 @@ public class AdminController {
         }
     }
 
-    @GetMapping("/load/year")
-    public void loadYear(){
-
+    @GetMapping("/load/userInfo")
+    public void loadUserInfo(){
+        initialConfig.initUserInfo();
     }
 
-    @GetMapping("/load/term")
-    public void loadTerm(){
-
+    @GetMapping("/load/course/count")
+    public void loadCourseCount(){
+        initialConfig.initCourseCount();
     }
 
-    @GetMapping("/token")
-    public void token(String token) throws Exception{
-
-        token =  stringRedisTemplate.opsForValue().get("ehall_zc_session_" + token);
-        System.out.println(token);
+    @GetMapping("/load/schedules")
+    public void loadClassSchedules(){
+        initialConfig.initClassSchedules();
     }
 }

@@ -1,5 +1,6 @@
 package com.zemcho.pe.controller.course.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,9 +10,11 @@ import javax.validation.constraints.NotNull;
 @Getter
 public class CancelDTO {
 
-    @NotNull(message = "ERR_NOT_COURSE_RECORD_ID")
-    private Integer id;
+    @JsonProperty(value = "user_number")
+    @NotNull(message = "ERR_NOT_USER_NUMBER")
+    private String userNumber;
 
-    @NotNull(message = "ERR_NOT_UID")
-    private Integer uid;
+    @JsonProperty(value = "sch_id")
+    @NotNull(message = "ERR_NOT_SCHEDULES")
+    private Integer schId;
 }

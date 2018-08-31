@@ -21,6 +21,7 @@ import com.zemcho.pe.util.IpAddressUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.support.atomic.RedisAtomicInteger;
 import org.springframework.stereotype.Service;
@@ -43,7 +44,7 @@ public class CourseService implements ICourseService {
     CourseService thisSelf;
 
     @Autowired
-    RedisTemplate<String, Integer> redisTemplate;
+    RedisTemplate<String, Integer> integerRedisTemplate;
 
     @Autowired
     RedisTemplate<String, Object> objectRedisTemplate;
@@ -83,7 +84,7 @@ public class CourseService implements ICourseService {
         // TODO 需要循环添加课程剩余 这里有毒
         int i = 0;
         for (CourseVO course : list) {
-            Integer remaining = redisTemplate.opsForValue().get(InitialConfig.SCHEDULE_PREFIX + course.getSchId());
+            Integer remaining = integerRedisTemplate.opsForValue().get(InitialConfig.SCHEDULE_PREFIX + course.getSchId());
             course.setRemaining(remaining == null ? 0 : remaining);
             list.set(i++, course);
         }
@@ -130,7 +131,7 @@ public class CourseService implements ICourseService {
             semaphore.acquire();
 
             // 判断是否已选
-            String s = stringRedisTemplate.opsForValue().get(InitialConfig.SELECTED_PREFIX + userNumber);
+            String s = (String) objectRedisTemplate.opsForValue().get(InitialConfig.SELECTED_PREFIX + userNumber);
             if (s != null){
                 semaphore.release();
                 log.info("-------------选课流程结束 - 已选课-------------");
@@ -138,7 +139,7 @@ public class CourseService implements ICourseService {
             }
 
             String key = InitialConfig.SCHEDULE_PREFIX + schId;
-            Integer count = redisTemplate.opsForValue().get(key);
+            Integer count = integerRedisTemplate.opsForValue().get(key);
 
             // 判断课程剩余数
             if (count == null || count <= 0) {
@@ -148,18 +149,18 @@ public class CourseService implements ICourseService {
             }
 
             // 课程剩余数减1
-            RedisAtomicInteger redisAtomicInteger = new RedisAtomicInteger(key, redisTemplate);
+            RedisAtomicInteger redisAtomicInteger = new RedisAtomicInteger(key, integerRedisTemplate);
             count = redisAtomicInteger.decrementAndGet();
 
             if (count < 0) {
                 // 更正由于并发导致count < 0
-                redisTemplate.opsForValue().set(key, 0);
+                integerRedisTemplate.opsForValue().set(key, 0);
                 semaphore.release();
                 log.info("-------------选课流程结束 - 无课程-------------");
                 return new Result(Message.ERR_COURSE_NOT_ENOUGH);
             }
 
-            stringRedisTemplate.opsForValue().set(InitialConfig.SELECTED_PREFIX + userNumber, userNumber);
+            objectRedisTemplate.opsForValue().set(InitialConfig.SELECTED_PREFIX + userNumber, userNumber);
             semaphore.release();
 
         } catch (InterruptedException e) {
@@ -195,37 +196,51 @@ public class CourseService implements ICourseService {
     @Override
     public Result cancelCourseSelect(CancelDTO cancelDTO) {
 
-        Integer uid = cancelDTO.getUid();
-        Integer id = cancelDTO.getId();
+        String userNumber = cancelDTO.getUserNumber();
+        Integer schId= cancelDTO.getSchId();
 
         // 判断用户是否存在
-        UserInfoVO userInfoVO = courseMapper.selectUserInfoById(uid);
+        UserInfoVO userInfoVO = (UserInfoVO)objectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
         if (userInfoVO == null){
             return new Result(Message.ERR_NOT_STUDENT);
         }
 
-        // 判断选课记录是否存在；注：退选后记录与归属与不存在
-        SelectCourseRecordVO selectCourseRecordVO = courseMapper.selectSelectedCourseRecord(uid, id);
-        if (selectCourseRecordVO == null) {
-            return new Result(Message.ERR_NOT_COURSE_RECORD);
+        String username = userInfoVO.getUsername();
+
+        // 判断是否有选课或已退选
+        String selectedKey = InitialConfig.SELECTED_PREFIX + username;
+        String s =(String) objectRedisTemplate.opsForValue().get(selectedKey);
+        if (s == null){
+            return new Result(Message.ERR_COURSE_SELECT);
         }
 
+        // 删除已选标记
+        objectRedisTemplate.delete(selectedKey);
+
+        // TODO PHP已做，可注释
+        // 判断选课记录是否存在；注：退选后记录与归属与不存在
+//        SelectCourseRecordVO selectCourseRecordVO = courseMapper.selectSelectedCourseRecord(uid, id);
+//        if (selectCourseRecordVO == null) {
+//            return new Result(Message.ERR_NOT_COURSE_RECORD);
+//        }
+
+        // TODO PHP已做，可注释
         // 更新选课记录状态
-        Integer cancelTakeCourse = courseMapper.cancelTakeCourse(uid, id);
-        if (cancelTakeCourse != 1) {
-            return new Result(Message.ERR_COURSE_WITHDRAW);
+//        Integer cancelTakeCourse = courseMapper.cancelTakeCourse(uid, id);
+//        if (cancelTakeCourse != 1) {
+//            return new Result(Message.ERR_COURSE_WITHDRAW);
+//        }
+
+        String scheduleKey = InitialConfig.SCHEDULE_PREFIX + schId;
+
+        Integer sch = integerRedisTemplate.opsForValue().get(scheduleKey);
+        if (sch == null){
+            return new Result(Message.ERR_ERROR_SCHEDULES);
         }
 
         // 课程剩余数自增1
-        Integer schId = selectCourseRecordVO.getSchId();
-        String key = InitialConfig.SCHEDULE_PREFIX + schId;
-
-        RedisAtomicInteger redisAtomicInteger = new RedisAtomicInteger(key, redisTemplate);
+        RedisAtomicInteger redisAtomicInteger = new RedisAtomicInteger(scheduleKey, integerRedisTemplate);
         redisAtomicInteger.incrementAndGet();
-
-        // 删除已选标记
-        String username = userInfoVO.getUsername();
-        stringRedisTemplate.delete(InitialConfig.SELECTED_PREFIX + username);
 
         return new Result(Message.SU_COURSE_WITHDRAW);
     }
@@ -324,18 +339,33 @@ public class CourseService implements ICourseService {
         courseMapper.saveSelectCourseLog(selectCourseLog);
 
         // TODO 保存成绩记录
-        CourseResults courseResults = new CourseResults();
-        courseResults.setYear(InitialConfig.YEAR);
-        courseResults.setTerm(InitialConfig.TERM);
-        courseResults.setCampus(campus);
-        courseResults.setUid(uid);
-        courseResults.setCourseId(courseId);
-        courseResults.setTeacherId(teacherId);
-        courseResults.setCreateTime(now);
-        courseResults.setUpdateTime(now);
-        courseMapper.saveCourseResults(courseResults);
+        CourseResults courseResults = courseMapper.selectCourseResultsByUid(uid);
+        if (courseResults == null){
+            courseResults = new CourseResults();
+            courseResults.setYear(InitialConfig.YEAR);
+            courseResults.setTerm(InitialConfig.TERM);
+            courseResults.setCampus(campus);
+            courseResults.setUid(uid);
+            courseResults.setCourseId(courseId);
+            courseResults.setTeacherId(teacherId);
+            courseResults.setCreateTime(now);
+            courseResults.setUpdateTime(now);
+            courseMapper.saveCourseResults(courseResults);
+        }else {
+            courseResults.setYear(InitialConfig.YEAR);
+            courseResults.setTerm(InitialConfig.TERM);
+            courseResults.setCampus(campus);
+            courseResults.setCourseId(courseId);
+            courseResults.setTeacherId(teacherId);
+            courseResults.setUpdateTime(now);
+
+            courseMapper.updateCourseResults(courseResults);
+        }
 
         // TODO 更新上课班级人数(这个定时更新)
+        String key = InitialConfig.COURSE_NUM + classId;
+        RedisAtomicInteger redisAtomicInteger = new RedisAtomicInteger(key, integerRedisTemplate);
+        redisAtomicInteger.incrementAndGet();
 
         // TODO 保存大厅事务
         Integer dataId = record.getId();

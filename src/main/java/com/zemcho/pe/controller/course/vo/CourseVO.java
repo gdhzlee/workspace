@@ -73,6 +73,11 @@ public class CourseVO  implements Serializable {
     }
 
     public String getWeekClassTime(){
+
+        if (weekClassTime.startsWith("[")){
+            return weekClassTime;
+        }
+
         return "[" + weekClassTime.replace(",","-") + "]周";
     }
 }

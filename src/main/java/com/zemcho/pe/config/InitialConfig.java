@@ -82,6 +82,8 @@ public class InitialConfig {
     public final static String USER_INFO_PREFIX = "user_info:";
     public final static String CLASS_SCHEDULES_PREFIX = "class_schedules:";
     public final static String SELECTED_PREFIX = "selected:";
+    public final static String COURSE_NUM = "course_num:";
+    public final static String RGEX = "uid\";i:(.*?);";
 
     public static List<SelectiveTimeVO> TOTAL = new ArrayList<>();
     public static List<SelectiveTimeVO> FIRST = new ArrayList<>();
@@ -102,7 +104,7 @@ public class InitialConfig {
 
     /* 初始化课程数量 */
     @PostConstruct
-    private void initCourseCount() {
+    public void initCourseCount() {
 
         List<CourseCountVO> courseCountVOS = courseMapper.selectCourseCountByYearAndTerm(YEAR, TERM);
         int i = 0;
@@ -120,7 +122,7 @@ public class InitialConfig {
 
     /* 初始化班级课表 */
     @PostConstruct
-    private void initClassSchedules() {
+    public void initClassSchedules() {
         List<Integer> classIds = courseMapper.selectClassIdAll();
 
         for (Integer classId : classIds) {
@@ -131,7 +133,7 @@ public class InitialConfig {
 
     /* 初始化用户信息 */
     @PostConstruct
-    private void initUserInfo() {
+    public void initUserInfo() {
         String yearTerm = getYearTerm(YEAR, TERM);
         Integer configId = courseMapper.selectConfigIdByYearAndTerm(YEAR, TERM);
         if (configId != null) {
@@ -154,7 +156,7 @@ public class InitialConfig {
 
     /* 初始化预览时间 */
     @PostConstruct
-    private void initPreviewTime(){
+    public void initPreviewTime(){
 
         PREVIEW_TIME = courseMapper.selectPreviewTimeByYearAndTerm(YEAR,TERM);
     }
@@ -191,6 +193,7 @@ public class InitialConfig {
         }
     }
 
+    /* 获取学期 */
     private static int getTerm() {
         LocalDate now = LocalDate.now();
 
@@ -202,6 +205,7 @@ public class InitialConfig {
         }
     }
 
+    /* 学年 */
     private static int getYear(int term) {
         LocalDate now = LocalDate.now();
 
@@ -216,6 +220,7 @@ public class InitialConfig {
         return year;
     }
 
+    /* 学期学年 */
     private String getYearTerm(Integer year, Integer term) {
 
         return year + "-" + (year + 1) + "学年第" + term + "学期";
@@ -223,20 +228,21 @@ public class InitialConfig {
 
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-
+    /* 是否预览时间 */
     public static int isPreview(){
 
         LocalDateTime now = LocalDateTime.now();
         boolean b = now.compareTo(InitialConfig.PREVIEW_TIME.getPreviewStartTime()) >= 0
                 && now.compareTo(InitialConfig.PREVIEW_TIME.getPreviewEndTime()) <= 0;
-        log.info("预览开始时间:{}",formatter.format(PREVIEW_TIME.getPreviewStartTime()));
-        log.info("预览结束时间:{}",formatter.format(PREVIEW_TIME.getPreviewEndTime()));
-        log.info("当前时间:{}",formatter.format(now));
-        log.info("是否处于预览时间:{}",b);
+//        log.info("预览开始时间:{}",formatter.format(PREVIEW_TIME.getPreviewStartTime()));
+//        log.info("预览结束时间:{}",formatter.format(PREVIEW_TIME.getPreviewEndTime()));
+//        log.info("当前时间:{}",formatter.format(now));
+//        log.info("是否处于预览时间:{}",b);
 
         return b ? 1 : 0;
     }
 
+    /* 是否选课时间 */
     public static boolean isSelective(){
 
         LocalDateTime now = LocalDateTime.now();
@@ -248,10 +254,10 @@ public class InitialConfig {
             boolean b = now.compareTo(start) >= 0
                     && now.compareTo(end) <= 0;
 
-            log.info("选课开始时间:{}",formatter.format(start));
-            log.info("选课结束时间:{}",formatter.format(end));
-            log.info("当前时间:{}",formatter.format(now));
-            log.info("是否处于选课时间:{}",b);
+//            log.info("选课开始时间:{}",formatter.format(start));
+//            log.info("选课结束时间:{}",formatter.format(end));
+//            log.info("当前时间:{}",formatter.format(now));
+//            log.info("是否处于选课时间:{}",b);
 
             if (b){
                 return true;

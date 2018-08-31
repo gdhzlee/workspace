@@ -24,7 +24,7 @@ public enum Message {
     ERR_NOT_SCHEDULES(1008,"缺少排课ID"),
     ERR_NOT_PHONE(1009,"缺少联系方式"),
     ERR_COURSE_NOT_ENOUGH(1010,"课程可选数不足"),
-    ERR_COURSE_SELECT(1011,"选课失败"),
+    ERR_COURSE_SELECT(1011,"选课失败,学生可能未选课或已退选"),
     ERR_NOT_USER_NUMBER(1012,"缺少学号"),
     ERR_NOT_COURSE_RECORD_ID(1013,"缺少选课记录ID"),
     ERR_NOT_COURSE_RECORD(1014,"选课记录不存在"),
@@ -35,6 +35,7 @@ public enum Message {
     ERR_NOT_OPEN_TIME(1019,"非选课时间段，系统未开放"),
     ERR_ERROR_AUTHORIZATION_VALUE(1020,"用户认证信息的值错误，请联系管理员"),
     ERR_ERROR_AUTHORIZATION_RELATIVE(1021,"用户认证信息与学号匹配错误"),
+    ERR_ERROR_SCHEDULES(1022,"排课ID错误"),
     ;
 
     private int code;

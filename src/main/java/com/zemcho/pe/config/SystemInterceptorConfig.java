@@ -40,6 +40,7 @@ public class SystemInterceptorConfig implements WebMvcConfigurer {
         registry.addInterceptor(systemInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns("/admin/java/**")
+                .excludePathPatterns("/Course/cancelCourseSelect")
         ;
     }
 }
