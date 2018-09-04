@@ -1,10 +1,11 @@
-package com.zemcho.pe.config;
+package com.zemcho.pe.config.initial;
 
 import com.zemcho.pe.controller.course.vo.*;
 import com.zemcho.pe.mapper.course.CourseMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -97,10 +98,10 @@ public class InitialConfig {
     CourseMapper courseMapper;
 
     @Autowired
-    RedisTemplate<String, Integer> redisTemplate;
+    RedisTemplate<String, Integer> writeIntegerRedisTemplate;
 
     @Autowired
-    RedisTemplate<String, Object> objectRedisTemplate;
+    RedisTemplate<String, Object> writeObjectRedisTemplate;
 
     /* 初始化课程数量 */
     @PostConstruct
@@ -114,7 +115,7 @@ public class InitialConfig {
             if (courseId <= 249) {
                 i += count;
             }
-            redisTemplate.opsForValue().set(SCHEDULE_PREFIX + courseId, count);
+            writeIntegerRedisTemplate.opsForValue().set(SCHEDULE_PREFIX + courseId, count);
         }
 
         System.out.println("总课程人数 = " + i);
@@ -125,9 +126,16 @@ public class InitialConfig {
     public void initClassSchedules() {
         List<Integer> classIds = courseMapper.selectClassIdAll();
 
+        LettuceConnectionFactory factory = (LettuceConnectionFactory)writeObjectRedisTemplate.getConnectionFactory();
+        String hostName = factory.getHostName();
+        String password = factory.getPassword();
+        int port = factory.getPort();
+        int database = factory.getDatabase();
+        log.info("系统写redis {host:{}, password:{}, port:{}, database:{}}",hostName, password, port, database);
+
         for (Integer classId : classIds) {
             List<CourseVO> courseVOS = courseMapper.selectCourseList(classId,YEAR, TERM);
-            objectRedisTemplate.opsForValue().set(CLASS_SCHEDULES_PREFIX + classId, courseVOS);
+            writeObjectRedisTemplate.opsForValue().set(CLASS_SCHEDULES_PREFIX + classId, courseVOS);
         }
     }
 
@@ -149,7 +157,7 @@ public class InitialConfig {
                 userInfo.setYearTerm(yearTerm);
 
                 String username = userInfo.getUsername();
-                objectRedisTemplate.opsForValue().set(USER_INFO_PREFIX + username, userInfo);
+                writeObjectRedisTemplate.opsForValue().set(USER_INFO_PREFIX + username, userInfo);
             }
         }
     }

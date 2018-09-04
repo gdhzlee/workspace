@@ -54,7 +54,7 @@ public interface CourseMapper {
     Integer saveCourseResults(CourseResults results);
 
     /* 获取学生成绩 */
-    CourseResults selectCourseResultsByUid(@Param("uid") Integer uid);
+    CourseResults selectCourseResultsByUid(@Param("uid") Integer uid, @Param("year")Integer year, @Param("term")Integer term);
 
     /* 更新学生成绩 */
     Integer updateCourseResults(CourseResults results);

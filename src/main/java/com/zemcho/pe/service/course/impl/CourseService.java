@@ -3,13 +3,12 @@ package com.zemcho.pe.service.course.impl;
 import com.github.pagehelper.PageInfo;
 import com.zemcho.pe.common.Message;
 import com.zemcho.pe.common.Result;
-import com.zemcho.pe.config.InitialConfig;
+import com.zemcho.pe.config.initial.InitialConfig;
 import com.zemcho.pe.controller.course.dto.BasicDTO;
 import com.zemcho.pe.controller.course.dto.CancelDTO;
 import com.zemcho.pe.controller.course.dto.SaveDataDTO;
 import com.zemcho.pe.controller.course.dto.SelectCourseDTO;
 import com.zemcho.pe.controller.course.vo.CourseVO;
-import com.zemcho.pe.controller.course.vo.SelectCourseRecordVO;
 import com.zemcho.pe.controller.course.vo.UserInfoVO;
 import com.zemcho.pe.entity.course.CourseResults;
 import com.zemcho.pe.entity.course.FormLog;
@@ -44,17 +43,30 @@ public class CourseService implements ICourseService {
     CourseService thisSelf;
 
     @Autowired
-    RedisTemplate<String, Integer> integerRedisTemplate;
+    RedisTemplate<String, Integer> readIntegerRedisTemplate;
 
     @Autowired
-    RedisTemplate<String, Object> objectRedisTemplate;
+    RedisTemplate<String, Integer> writeIntegerRedisTemplate;
 
     @Autowired
-    RedisTemplate<String,String> stringRedisTemplate;
+    RedisTemplate<String, Object> readObjectRedisTemplate;
+
+    @Autowired
+    RedisTemplate<String, Object> writeObjectRedisTemplate;
+
+    @Autowired
+    RedisTemplate<String,String> ehallStringRedisTemplate;
 
     public final static Semaphore semaphore = new Semaphore(1);
 
     public static ExecutorService executorService = Executors.newCachedThreadPool();
+
+    public static Map<Integer, String> SEX = new LinkedHashMap<Integer, String>(){
+        {
+            put(1,"男");
+            put(2,"女");
+        }
+    };
 
     @Override
     public Result getCourseList(BasicDTO basicDTO) {
@@ -65,7 +77,7 @@ public class CourseService implements ICourseService {
         HttpServletRequest request = basicDTO.getRequest();
 
         // 判断用户是否存在
-        UserInfoVO userInfo = (UserInfoVO) objectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
+        UserInfoVO userInfo = (UserInfoVO) readObjectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
         if (userInfo == null) {
             return new Result(Message.ERR_NOT_STUDENT);
         }
@@ -84,7 +96,7 @@ public class CourseService implements ICourseService {
         // TODO 需要循环添加课程剩余 这里有毒
         int i = 0;
         for (CourseVO course : list) {
-            Integer remaining = integerRedisTemplate.opsForValue().get(InitialConfig.SCHEDULE_PREFIX + course.getSchId());
+            Integer remaining = readIntegerRedisTemplate.opsForValue().get(InitialConfig.SCHEDULE_PREFIX + course.getSchId());
             course.setRemaining(remaining == null ? 0 : remaining);
             list.set(i++, course);
         }
@@ -105,8 +117,15 @@ public class CourseService implements ICourseService {
         String userNumber = selectCourseDTO.getUserNumber();
         HttpServletRequest request = selectCourseDTO.getRequest();
 
+        LettuceConnectionFactory factory = (LettuceConnectionFactory)readObjectRedisTemplate.getConnectionFactory();
+        String hostName = factory.getHostName();
+        String password = factory.getPassword();
+        int port = factory.getPort();
+        int database = factory.getDatabase();
+        log.info("系统读redis {host:{}, password:{}, port:{}, database:{}}",hostName, password, port, database);
+
         // 判断用户是否存在
-        UserInfoVO userInfo = (UserInfoVO) objectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
+        UserInfoVO userInfo = (UserInfoVO) readObjectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
         if (userInfo == null) {
             return new Result(Message.ERR_NOT_STUDENT);
         }
@@ -120,10 +139,29 @@ public class CourseService implements ICourseService {
         // 判断课程是否符合选课要求
         Integer classId = userInfo.getClassId();
         log.info("classId:{}", classId);
-        List<CourseVO> courses = (List<CourseVO>) objectRedisTemplate.opsForValue().get(InitialConfig.CLASS_SCHEDULES_PREFIX + classId);
+        List<CourseVO> courses = (List<CourseVO>) readObjectRedisTemplate.opsForValue().get(InitialConfig.CLASS_SCHEDULES_PREFIX + classId);
         List<CourseVO> collect = courses.parallelStream().filter(c -> c.getSchId().equals(schId)).collect(Collectors.toList());
         if (collect.size() == 0){
             return new Result(Message.ERR_COURSE_DISABLE_SELECTED);
+        }
+
+        CourseVO courseVO = collect.get(0);
+        Integer courseCampus = courseVO.getCourseCampus();
+        Integer campus = userInfo.getCampus();
+
+        // 判断校区
+        if (!campus.equals(courseCampus)){
+            return new Result(Message.ERR_COURSE_DISABLE_SELECTED);
+        }
+
+        Integer userSex = userInfo.getSex();
+        String courseSex = courseVO.getSex();
+
+        // 判断性别
+        if (!courseSex.equals("不限")){
+            if (!courseSex.equals(SEX.get(userSex))){
+                return new Result(Message.ERR_COURSE_DISABLE_SELECTED);
+            }
         }
 
         log.info("-------------选课流程开始-------------");
@@ -131,7 +169,7 @@ public class CourseService implements ICourseService {
             semaphore.acquire();
 
             // 判断是否已选
-            String s = (String) objectRedisTemplate.opsForValue().get(InitialConfig.SELECTED_PREFIX + userNumber);
+            String s = (String) readObjectRedisTemplate.opsForValue().get(InitialConfig.SELECTED_PREFIX + userNumber);
             if (s != null){
                 semaphore.release();
                 log.info("-------------选课流程结束 - 已选课-------------");
@@ -139,7 +177,7 @@ public class CourseService implements ICourseService {
             }
 
             String key = InitialConfig.SCHEDULE_PREFIX + schId;
-            Integer count = integerRedisTemplate.opsForValue().get(key);
+            Integer count = readIntegerRedisTemplate.opsForValue().get(key);
 
             // 判断课程剩余数
             if (count == null || count <= 0) {
@@ -149,18 +187,18 @@ public class CourseService implements ICourseService {
             }
 
             // 课程剩余数减1
-            RedisAtomicInteger redisAtomicInteger = new RedisAtomicInteger(key, integerRedisTemplate);
+            RedisAtomicInteger redisAtomicInteger = new RedisAtomicInteger(key, writeIntegerRedisTemplate);
             count = redisAtomicInteger.decrementAndGet();
 
             if (count < 0) {
                 // 更正由于并发导致count < 0
-                integerRedisTemplate.opsForValue().set(key, 0);
+                writeIntegerRedisTemplate.opsForValue().set(key, 0);
                 semaphore.release();
                 log.info("-------------选课流程结束 - 无课程-------------");
                 return new Result(Message.ERR_COURSE_NOT_ENOUGH);
             }
 
-            objectRedisTemplate.opsForValue().set(InitialConfig.SELECTED_PREFIX + userNumber, userNumber);
+            writeObjectRedisTemplate.opsForValue().set(InitialConfig.SELECTED_PREFIX + userNumber, userNumber);
             semaphore.release();
 
         } catch (InterruptedException e) {
@@ -171,9 +209,8 @@ public class CourseService implements ICourseService {
         }
 
         //TODO 开线程执行保存数据
-        Integer campus = userInfo.getCampus();
         Integer faculty = userInfo.getFaculty();
-        CourseVO courseVO = collect.get(0);
+
         Integer courseId = courseVO.getCourseId();
         Integer teacherId = courseVO.getTeacherId();
 
@@ -200,47 +237,51 @@ public class CourseService implements ICourseService {
         Integer schId= cancelDTO.getSchId();
 
         // 判断用户是否存在
-        UserInfoVO userInfoVO = (UserInfoVO)objectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
+        UserInfoVO userInfoVO = (UserInfoVO) readObjectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
         if (userInfoVO == null){
             return new Result(Message.ERR_NOT_STUDENT);
         }
 
         String username = userInfoVO.getUsername();
+        Integer classId = userInfoVO.getClassId();
 
-        // 判断是否有选课或已退选
-        String selectedKey = InitialConfig.SELECTED_PREFIX + username;
-        String s =(String) objectRedisTemplate.opsForValue().get(selectedKey);
-        if (s == null){
-            return new Result(Message.ERR_COURSE_SELECT);
+        try {
+            semaphore.acquire();
+
+            // 判断是否有选课或已退选
+            String selectedKey = InitialConfig.SELECTED_PREFIX + username;
+            String s =(String) readObjectRedisTemplate.opsForValue().get(selectedKey);
+            if (s == null){
+                semaphore.release();
+                return new Result(Message.ERR_COURSE_SELECT);
+            }
+
+            // 删除已选标记
+            writeObjectRedisTemplate.delete(selectedKey);
+
+            // 班级已选课人数减1
+            String courseNumKey = InitialConfig.COURSE_NUM + classId;
+            RedisAtomicInteger courseNum = new RedisAtomicInteger(courseNumKey, writeIntegerRedisTemplate);
+            courseNum.decrementAndGet();
+
+            String scheduleKey = InitialConfig.SCHEDULE_PREFIX + schId;
+
+            Integer sch = readIntegerRedisTemplate.opsForValue().get(scheduleKey);
+            if (sch == null){
+                semaphore.release();
+                return new Result(Message.ERR_ERROR_SCHEDULES);
+            }
+
+            // 课程剩余数自增1
+            RedisAtomicInteger schedule = new RedisAtomicInteger(scheduleKey, writeIntegerRedisTemplate);
+            schedule.incrementAndGet();
+
+            semaphore.release();
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            semaphore.release();
         }
-
-        // 删除已选标记
-        objectRedisTemplate.delete(selectedKey);
-
-        // TODO PHP已做，可注释
-        // 判断选课记录是否存在；注：退选后记录与归属与不存在
-//        SelectCourseRecordVO selectCourseRecordVO = courseMapper.selectSelectedCourseRecord(uid, id);
-//        if (selectCourseRecordVO == null) {
-//            return new Result(Message.ERR_NOT_COURSE_RECORD);
-//        }
-
-        // TODO PHP已做，可注释
-        // 更新选课记录状态
-//        Integer cancelTakeCourse = courseMapper.cancelTakeCourse(uid, id);
-//        if (cancelTakeCourse != 1) {
-//            return new Result(Message.ERR_COURSE_WITHDRAW);
-//        }
-
-        String scheduleKey = InitialConfig.SCHEDULE_PREFIX + schId;
-
-        Integer sch = integerRedisTemplate.opsForValue().get(scheduleKey);
-        if (sch == null){
-            return new Result(Message.ERR_ERROR_SCHEDULES);
-        }
-
-        // 课程剩余数自增1
-        RedisAtomicInteger redisAtomicInteger = new RedisAtomicInteger(scheduleKey, integerRedisTemplate);
-        redisAtomicInteger.incrementAndGet();
 
         return new Result(Message.SU_COURSE_WITHDRAW);
     }
@@ -251,7 +292,7 @@ public class CourseService implements ICourseService {
         String userNumber = basicDTO.getUserNumber();
 
         // 判断用户是否存在
-        UserInfoVO userInfo = (UserInfoVO) objectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
+        UserInfoVO userInfo = (UserInfoVO) readObjectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
         if (userInfo == null) {
             return new Result(Message.ERR_NOT_STUDENT);
         }
@@ -269,7 +310,7 @@ public class CourseService implements ICourseService {
     @Cacheable(value = "course_list", key = "'course_list_'+#classId +'_'+#page+'_'+#pageRows", sync = true)
     public PageInfo<CourseVO> getCourseList(Integer classId, Integer page, Integer pageRows) {
 
-        List<CourseVO> courseVOS = (List<CourseVO>) objectRedisTemplate.opsForValue().get(InitialConfig.CLASS_SCHEDULES_PREFIX + classId);
+        List<CourseVO> courseVOS = (List<CourseVO>) readObjectRedisTemplate.opsForValue().get(InitialConfig.CLASS_SCHEDULES_PREFIX + classId);
         if (courseVOS == null) {
             PageInfo<CourseVO> pageInfo = new PageInfo<>(new ArrayList<>());
             pageInfo.setPageNum(page);
@@ -339,7 +380,7 @@ public class CourseService implements ICourseService {
         courseMapper.saveSelectCourseLog(selectCourseLog);
 
         // TODO 保存成绩记录
-        CourseResults courseResults = courseMapper.selectCourseResultsByUid(uid);
+        CourseResults courseResults = courseMapper.selectCourseResultsByUid(uid, InitialConfig.YEAR, InitialConfig.TERM);
         if (courseResults == null){
             courseResults = new CourseResults();
             courseResults.setYear(InitialConfig.YEAR);
@@ -362,9 +403,9 @@ public class CourseService implements ICourseService {
             courseMapper.updateCourseResults(courseResults);
         }
 
-        // TODO 更新上课班级人数(这个定时更新)
+        // TODO 更新上课班级人数(这个定时更新) -- 还没做
         String key = InitialConfig.COURSE_NUM + classId;
-        RedisAtomicInteger redisAtomicInteger = new RedisAtomicInteger(key, integerRedisTemplate);
+        RedisAtomicInteger redisAtomicInteger = new RedisAtomicInteger(key, writeIntegerRedisTemplate);
         redisAtomicInteger.incrementAndGet();
 
         // TODO 保存大厅事务

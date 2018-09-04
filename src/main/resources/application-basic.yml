@@ -1,0 +1,40 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /dgut-sports
+
+spring:
+  # 关闭jmx资源管理器
+  jmx:
+    enabled: false
+
+# xml文件映射
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+
+# SQL打印
+logging:
+  level:
+    com:
+      zemcho:
+        pe:
+          mapper: debug
+# 分页
+pagehelper:
+  helper-dialect: mysql
+  reasonable: true
+  support-methods-arguments: true
+  params: count=countSql
+  offset-as-page-num: true
+  row-bounds-with-count: true
+
+# Actuator
+management:
+  endpoints:
+    web:
+      base-path: manage
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always

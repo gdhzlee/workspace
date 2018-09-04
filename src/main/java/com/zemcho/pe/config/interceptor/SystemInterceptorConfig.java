@@ -1,4 +1,4 @@
-package com.zemcho.pe.config;
+package com.zemcho.pe.config.interceptor;
 
 import com.zemcho.pe.interceptor.SystemInterceptor;
 import org.springframework.context.annotation.Configuration;
@@ -40,7 +40,7 @@ public class SystemInterceptorConfig implements WebMvcConfigurer {
         registry.addInterceptor(systemInterceptor)
                 .addPathPatterns("/**")
                 .excludePathPatterns("/admin/java/**")
-                .excludePathPatterns("/Course/cancelCourseSelect")
+                .excludePathPatterns("/java/api/Course/cancelCourseSelect")
         ;
     }
 }

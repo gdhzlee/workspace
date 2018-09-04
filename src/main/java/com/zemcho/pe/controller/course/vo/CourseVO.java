@@ -1,7 +1,7 @@
 package com.zemcho.pe.controller.course.vo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.zemcho.pe.config.InitialConfig;
+import com.zemcho.pe.config.initial.InitialConfig;
 import lombok.Getter;
 import lombok.Setter;
 

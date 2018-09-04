@@ -3,9 +3,10 @@ package com.zemcho.pe.interceptor;
 import com.alibaba.fastjson.JSON;
 import com.zemcho.pe.common.Message;
 import com.zemcho.pe.common.Result;
-import com.zemcho.pe.config.InitialConfig;
+import com.zemcho.pe.config.initial.InitialConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -14,7 +15,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,7 +45,7 @@ import java.util.regex.Pattern;
 public class SystemInterceptor implements HandlerInterceptor {
 
     @Autowired
-    RedisTemplate<String,String> stringRedisTemplate;
+    RedisTemplate<String,String> ehallStringRedisTemplate;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
@@ -61,11 +61,19 @@ public class SystemInterceptor implements HandlerInterceptor {
             return returnFailMessage(response, new Result(Message.ERR_NOT_LOGIN));
         }
 
-        String var0 = stringRedisTemplate.opsForValue().get("ehall_zc_session_" + authorization);
-        if (var0 == null){
+        LettuceConnectionFactory factory = (LettuceConnectionFactory) ehallStringRedisTemplate.getConnectionFactory();
+        String hostName = factory.getHostName();
+        String password = factory.getPassword();
+        int port = factory.getPort();
+        int database = factory.getDatabase();
+        log.info("大厅redis {host:{}, password:{}, port:{}, database:{}}",hostName, password, port, database);
+        String var0 = ehallStringRedisTemplate.opsForValue().get("ehall_zc_session_" + authorization);
+
+        if (var0 == null || "".equals(var0)){
             return returnFailMessage(response, new Result(Message.ERR_NOT_LOGIN));
         }
 
+        log.info("authorization:{}", var0);
         String uid = getUid(var0, InitialConfig.RGEX);
         if (uid.equals("")){
             return returnFailMessage(response, new Result(Message.ERR_ERROR_AUTHORIZATION_VALUE));
@@ -103,7 +111,7 @@ public class SystemInterceptor implements HandlerInterceptor {
 //        LocalDateTime now = LocalDateTime.now();
 //
 //        if (InitialConfig.isPreview() == 1){
-//            if (requestURI.equals("/sports/Course/selectCourse")){
+//            if (requestURI.equals("/dgut-sports/java/api/Course/selectCourse")){
 //                return returnFailMessage(response, new Result(Message.ERR_NOT_SELECTIVE_TIME));
 //            }
 //        }else {

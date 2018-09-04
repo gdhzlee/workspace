@@ -1,4 +1,4 @@
-package com.zemcho.pe.config;
+package com.zemcho.pe.config.datasource;
 
 import org.springframework.context.annotation.Configuration;
 

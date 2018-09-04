@@ -1,7 +1,3 @@
-server:
-  port: 8080
-  servlet:
-    context-path: /sports
 redis:
   host: 172.31.18.22
 spring:
@@ -45,33 +41,3 @@ spring:
       connection-timeout: 30000
       connection-test-query: SELECT 1
     type: com.zaxxer.hikari.HikariDataSource
-
-  #  # 缓存
-  #  cache:
-  #    redis:
-  #      cache-null-values: true
-  #      time-to-live: 5m
-
-  # 关闭jmx资源管理器
-  jmx:
-    enabled: false
-
-# xml文件映射
-mybatis:
-  mapper-locations: classpath:mapper/**/*.xml
-
-# SQL打印
-logging:
-  level:
-    com:
-      zemcho:
-        pe:
-          mapper: debug
-# 分页
-pagehelper:
-  helper-dialect: mysql
-  reasonable: true
-  support-methods-arguments: true
-  params: count=countSql
-  offset-as-page-num: true
-  row-bounds-with-count: true

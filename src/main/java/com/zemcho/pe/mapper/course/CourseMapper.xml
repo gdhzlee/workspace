@@ -177,14 +177,12 @@
     <select id="selectCourseResultsByUid" resultType="com.zemcho.pe.entity.course.CourseResults">
         SELECT id, year, term, campus, course_id AS 'courseId', teacher_uid AS 'teacherId', uid
         FROM zc_sports_stu_results
-        WHERE uid = #{uid}
+        WHERE uid = #{uid} AND year = #{year} AND term = #{term}
     </select>
 
     <update id="updateCourseResults">
         UPDATE zc_sports_stu_results
-        SET year        = #{year},
-            term        = #{term},
-            campus      = #{campus},
+        SET campus      = #{campus},
             course_id   = #{courseId},
             teacher_uid = #{teacherId},
             update_time = #{updateTime}
