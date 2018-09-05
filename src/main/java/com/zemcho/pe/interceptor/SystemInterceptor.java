@@ -14,7 +14,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -108,8 +107,6 @@ public class SystemInterceptor implements HandlerInterceptor {
 
 
         // 校验预览时间与选课时间
-        LocalDateTime now = LocalDateTime.now();
-
         if (InitialConfig.isPreview() == 1){
             if (requestURI.equals("/dgut-sports/java/api/Course/selectCourse")){
                 return returnFailMessage(response, new Result(Message.ERR_NOT_SELECTIVE_TIME));

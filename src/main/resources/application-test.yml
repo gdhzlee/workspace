@@ -35,11 +35,11 @@ spring:
 
   # 数据库连接池
   datasource:
-    ip: 219.222.189.62
+    ip: 219.222.189.166
     port: 3306
-    database: dgut_sport
-    username: root
-    password: zc161104
+    database: zemcho3
+    username: java
+    password: java_zat
     url: jdbc:mysql://${spring.datasource.ip}:${spring.datasource.port}/${spring.datasource.database}?characterEncoding=utf8&useSSL=false&useUnicode=true&allowMultiQueries=true&autoReconnect=true
     hikari:
       maximum-pool-size: 5000

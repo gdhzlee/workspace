@@ -10,6 +10,8 @@ public enum Message {
     SU_TEACHER_INFO(1000,"获取教师信息成功"),
     SU_RECORD_SELECT(1000,"获取选课记录成功"),
     SU_RECORD_WITHDRAW(1000,"获取退选记录成功"),
+    SU_START_COURSE_NUMBER_JOB(1000,"更新班级已选人数的工作任务启动成功"),
+    SU_SHUTDOWN_COURSE_NUMBER_JOB(1000,"更新班级已选人数的工作任务关闭成功"),
 
     /* ERROR */
     ERR_SERVER_HTTP_MEDIA_TYPE_NOT_SUPPORTED(1001,"Content-Type的类型错误"),
@@ -37,6 +39,8 @@ public enum Message {
     ERR_ERROR_AUTHORIZATION_VALUE(1020,"用户认证信息的值错误，请联系管理员"),
     ERR_ERROR_AUTHORIZATION_RELATIVE(1021,"用户认证信息与学号匹配错误"),
     ERR_ERROR_SCHEDULES(1022,"排课ID错误"),
+    ERR_COURSE_NUMBER_JOB_EXIST(1023,"更新班级已选人数的工作任务已存在"),
+    ERR_COURSE_NUMBER_JOB_NOT_EXIST(1023,"更新班级已选人数的工作任务不存在"),
     ;
 
     private int code;

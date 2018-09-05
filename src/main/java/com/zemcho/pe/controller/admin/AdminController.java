@@ -1,7 +1,11 @@
 package com.zemcho.pe.controller.admin;
 
+import com.zemcho.pe.common.Message;
+import com.zemcho.pe.common.Result;
 import com.zemcho.pe.config.initial.InitialConfig;
 import com.zemcho.pe.mapper.course.CourseMapper;
+import com.zemcho.pe.service.quartz.CourseNumberJob;
+import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +20,7 @@ import java.util.concurrent.Executors;
 @RestController
 @RequestMapping("/admin/java")
 public class AdminController {
+
     @Autowired
     CourseMapper courseMapper;
 
@@ -25,6 +30,9 @@ public class AdminController {
     @Autowired
     InitialConfig initialConfig;
 
+    @Autowired
+    Scheduler scheduler;
+
     @GetMapping("/load/preview")
     public void loadPreviewTime(){
         InitialConfig.PREVIEW_TIME = courseMapper.selectPreviewTimeByYearAndTerm(InitialConfig.YEAR,InitialConfig.TERM);
@@ -32,15 +40,7 @@ public class AdminController {
 
     @GetMapping("/load/selective")
     public void loadSelectiveTime(){
-        Integer configId = courseMapper.selectConfigIdByYearAndTerm(InitialConfig.YEAR, InitialConfig.TERM);
-        System.out.println("configId = " + configId);
-        if (configId != null) {
-            InitialConfig.FIRST = courseMapper.selectTimeList(configId, true);
-            InitialConfig.SECOND = courseMapper.selectTimeList(configId, false);
-            InitialConfig.TOTAL.clear();
-            InitialConfig.TOTAL.addAll(InitialConfig.FIRST);
-            InitialConfig.TOTAL.addAll(InitialConfig.SECOND);
-        }
+        initialConfig.initSelectiveTime();
     }
 
     @GetMapping("/load/userInfo")
@@ -55,6 +55,14 @@ public class AdminController {
 
     @GetMapping("/load/schedules")
     public void loadClassSchedules(){
+        initialConfig.initClassSchedules();
+    }
+
+    @GetMapping("/load/all")
+    public void loadAll(){
+        initialConfig.initSelectiveTime();
+        initialConfig.initUserInfo();
+        initialConfig.initCourseCount();
         initialConfig.initClassSchedules();
     }
 
@@ -81,5 +89,76 @@ public class AdminController {
         Long end = System.currentTimeMillis();
 
         System.out.println(end - start);
+    }
+
+    @GetMapping("/quartz/start")
+    public Result startQuartz(CronSchedule cronSchedule, String cron){
+        String cronString = null;
+
+        if (cronSchedule != null){
+            cronString = cronSchedule.getValue();
+        }else {
+            if (cron != null){
+                cronString = cron;
+            }
+        }
+
+        String courseNumberJobName = InitialConfig.COURSE_NUMBER_JOB_NAME;
+        JobDetail jobDetail = JobBuilder.newJob(CourseNumberJob.class).withIdentity(courseNumberJobName, courseNumberJobName).build();
+        Trigger trigger = TriggerBuilder.newTrigger().withIdentity(courseNumberJobName, courseNumberJobName).withSchedule(CronScheduleBuilder.cronSchedule(cronString)).build();
+
+        try {
+            boolean exists = scheduler.checkExists(JobKey.jobKey(courseNumberJobName));
+
+            if (exists){
+                return new Result(Message.ERR_COURSE_NUMBER_JOB_EXIST);
+            }
+
+            scheduler.scheduleJob(jobDetail, trigger);
+            if (!scheduler.isShutdown()) {
+                scheduler.start();
+            }
+
+            return new Result(Message.SU_START_COURSE_NUMBER_JOB);
+        } catch (SchedulerException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    @GetMapping("/quartz/shutdown")
+    public Result shutdownQuartz(){
+        String courseNumberJobName = InitialConfig.COURSE_NUMBER_JOB_NAME;
+        try {
+            boolean exists = scheduler.checkExists(JobKey.jobKey(courseNumberJobName));
+            if (exists == false){
+
+                return new Result(Message.ERR_COURSE_NUMBER_JOB_NOT_EXIST);
+            }
+
+            scheduler.shutdown();
+
+            return new Result(Message.SU_SHUTDOWN_COURSE_NUMBER_JOB);
+        } catch (SchedulerException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    enum CronSchedule{
+        MINUTE("0 */2 * * * ?"),
+        HALF_HOUR("0 */30 * * * ?");
+
+        private String value;
+
+        CronSchedule(String value){
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
     }
 }

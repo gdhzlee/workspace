@@ -85,6 +85,7 @@ public class InitialConfig {
     public final static String SELECTED_PREFIX = "selected:";
     public final static String COURSE_NUM = "course_num:";
     public final static String RGEX = "uid\";i:(.*?);";
+    public final static String COURSE_NUMBER_JOB_NAME = "course_number_job";
 
     public static List<SelectiveTimeVO> TOTAL = new ArrayList<>();
     public static List<SelectiveTimeVO> FIRST = new ArrayList<>();
@@ -102,6 +103,19 @@ public class InitialConfig {
 
     @Autowired
     RedisTemplate<String, Object> writeObjectRedisTemplate;
+
+    /* 初始化选课时间 */
+    public void initSelectiveTime(){
+        Integer configId = courseMapper.selectConfigIdByYearAndTerm(InitialConfig.YEAR, InitialConfig.TERM);
+        System.out.println("configId = " + configId);
+        if (configId != null) {
+            InitialConfig.FIRST = courseMapper.selectTimeList(configId, true);
+            InitialConfig.SECOND = courseMapper.selectTimeList(configId, false);
+            InitialConfig.TOTAL.clear();
+            InitialConfig.TOTAL.addAll(InitialConfig.FIRST);
+            InitialConfig.TOTAL.addAll(InitialConfig.SECOND);
+        }
+    }
 
     /* 初始化课程数量 */
     @PostConstruct
@@ -142,23 +156,18 @@ public class InitialConfig {
     /* 初始化用户信息 */
     @PostConstruct
     public void initUserInfo() {
+
+        initSelectiveTime();
+
         String yearTerm = getYearTerm(YEAR, TERM);
-        Integer configId = courseMapper.selectConfigIdByYearAndTerm(YEAR, TERM);
-        if (configId != null) {
-            FIRST = courseMapper.selectTimeList(configId, true);
-            SECOND = courseMapper.selectTimeList(configId, false);
-            TOTAL.addAll(FIRST);
-            TOTAL.addAll(SECOND);
+        List<UserInfoVO> userInfoVOS = courseMapper.selectUserInfoByCampusAndYearAndTerm(YEAR, TERM);
+        for (UserInfoVO userInfo : userInfoVOS) {
+            userInfo.setFirst(FIRST);
+            userInfo.setSecond(SECOND);
+            userInfo.setYearTerm(yearTerm);
 
-            List<UserInfoVO> userInfoVOS = courseMapper.selectUserInfoByCampusAndYearAndTerm(YEAR, TERM);
-            for (UserInfoVO userInfo : userInfoVOS) {
-                userInfo.setFirst(FIRST);
-                userInfo.setSecond(SECOND);
-                userInfo.setYearTerm(yearTerm);
-
-                String username = userInfo.getUsername();
-                writeObjectRedisTemplate.opsForValue().set(USER_INFO_PREFIX + username, userInfo);
-            }
+            String username = userInfo.getUsername();
+            writeObjectRedisTemplate.opsForValue().set(USER_INFO_PREFIX + username, userInfo);
         }
     }
 
@@ -196,6 +205,7 @@ public class InitialConfig {
         if (configId != null) {
             FIRST = courseMapper.selectTimeList(configId, true);
             SECOND = courseMapper.selectTimeList(configId, false);
+            TOTAL.clear();
             TOTAL.addAll(FIRST);
             TOTAL.addAll(SECOND);
         }
@@ -242,10 +252,10 @@ public class InitialConfig {
         LocalDateTime now = LocalDateTime.now();
         boolean b = now.compareTo(InitialConfig.PREVIEW_TIME.getPreviewStartTime()) >= 0
                 && now.compareTo(InitialConfig.PREVIEW_TIME.getPreviewEndTime()) <= 0;
-//        log.info("预览开始时间:{}",formatter.format(PREVIEW_TIME.getPreviewStartTime()));
-//        log.info("预览结束时间:{}",formatter.format(PREVIEW_TIME.getPreviewEndTime()));
-//        log.info("当前时间:{}",formatter.format(now));
-//        log.info("是否处于预览时间:{}",b);
+        log.info("预览开始时间:{}",formatter.format(PREVIEW_TIME.getPreviewStartTime()));
+        log.info("预览结束时间:{}",formatter.format(PREVIEW_TIME.getPreviewEndTime()));
+        log.info("当前时间:{}",formatter.format(now));
+        log.info("是否处于预览时间:{}",b);
 
         return b ? 1 : 0;
     }
@@ -262,10 +272,10 @@ public class InitialConfig {
             boolean b = now.compareTo(start) >= 0
                     && now.compareTo(end) <= 0;
 
-//            log.info("选课开始时间:{}",formatter.format(start));
-//            log.info("选课结束时间:{}",formatter.format(end));
-//            log.info("当前时间:{}",formatter.format(now));
-//            log.info("是否处于选课时间:{}",b);
+            log.info("选课开始时间:{}",formatter.format(start));
+            log.info("选课结束时间:{}",formatter.format(end));
+            log.info("当前时间:{}",formatter.format(now));
+            log.info("是否处于选课时间:{}",b);
 
             if (b){
                 return true;
