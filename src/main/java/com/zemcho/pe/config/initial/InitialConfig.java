@@ -87,6 +87,8 @@ public class InitialConfig {
     public final static String RGEX = "uid\";i:(.*?);";
     public final static String COURSE_NUMBER_JOB_NAME = "course_number_job";
 
+
+    public static Map<Integer, Integer> numberMap = new LinkedHashMap<>();
     public static List<SelectiveTimeVO> TOTAL = new ArrayList<>();
     public static List<SelectiveTimeVO> FIRST = new ArrayList<>();
     public static List<SelectiveTimeVO> SECOND = new ArrayList<>();

@@ -8,15 +8,12 @@ import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Set;
 
-@Component
+@Service
 public class CourseNumberJob implements Job {
-
-    public static Map<Integer, Integer> numberMap = new LinkedHashMap<>();
 
     @Autowired
     RedisTemplate<String, Integer> readIntegerRedisTemplate;
@@ -41,15 +38,15 @@ public class CourseNumberJob implements Job {
             Integer courseNumber = readIntegerRedisTemplate.opsForValue().get(key);
 
             // 检查是否需要更新到数据库
-            Integer value = numberMap.get(classId);
-            
+            Integer value = InitialConfig.numberMap.get(classId);
+
             if (value == null){
-                numberMap.put(classId, courseNumber);
+                InitialConfig.numberMap.put(classId, courseNumber);
                 courseMapper.updateCourseNumber(InitialConfig.YEAR, InitialConfig.TERM, classId, courseNumber, now);
             }else {
 
                 if (!value.equals(courseNumber)){
-                    numberMap.put(classId, courseNumber);
+                    InitialConfig.numberMap.put(classId, courseNumber);
                     courseMapper.updateCourseNumber(InitialConfig.YEAR, InitialConfig.TERM, classId, courseNumber, now);
                 }
             }
