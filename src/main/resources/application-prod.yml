@@ -1,32 +1,42 @@
 redis:
   host: 172.31.18.22
+  timeout: 3000
 spring:
   redis:
     lettuce:
       pool:
-        max-active: 20000
-        max-wait: 5s
+        max-active: 50000
+        #TODO 手动配置:3000
+        #TODO 自动配置:3s
+        max-wait: 3000
         max-idle: 40
         min-idle: 0
-    host: ${redis.host}
-    port: 6381
-    database: 0
-    timeout: 3s
-    password: zc@redis.161104
-  #    cluster:
-  #      nodes[0]: ${redis.host}:6380
-  #      nodes[1]: ${redis.host}:6381
-  #      nodes[2]: ${redis.host}:6382
-  #      nodes[3]: ${redis.host}:6383
-  #      nodes[4]: ${redis.host}:6384
-  #      nodes[5]: ${redis.host}:6385
+    # 大厅
+    ehall:
+      host: 172.31.20.51
+      port: 6379
+      database: 0
+      password: redis@!zat16114
+      timeout: ${redis.timeout}
+    # 写
+    write:
+      host: ${redis.host}
+      port: 6380
+      database: 1
+      password: zc@redis.161104
+      timeout: ${redis.timeout}
+    # 读
+    read:
+      host: ${redis.host}
+      port: 6381
+      database: 1
+      password: zc@redis.161104
+      timeout: ${redis.timeout}
 
   # 数据库连接池
   datasource:
     ip: 219.222.189.62
     port: 3306
-    #    ip: 172.30.252.9
-    #    port: 3307
     database: dgut_sport
     username: root
     password: zc161104

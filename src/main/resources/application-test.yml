@@ -13,10 +13,10 @@ spring:
         min-idle: 0
     # 大厅
     ehall:
-      host: 172.31.20.51
+      host: 219.222.189.156
       port: 6379
       database: 0
-      password: redis@!zat16114
+      password: klinson
       timeout: ${redis.timeout}
     # 写
     write:

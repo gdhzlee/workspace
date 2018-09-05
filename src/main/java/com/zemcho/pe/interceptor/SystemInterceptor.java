@@ -6,7 +6,6 @@ import com.zemcho.pe.common.Result;
 import com.zemcho.pe.config.initial.InitialConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
@@ -15,6 +14,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -107,19 +107,19 @@ public class SystemInterceptor implements HandlerInterceptor {
 
 
 
-//        // 校验预览时间与选课时间
-//        LocalDateTime now = LocalDateTime.now();
-//
-//        if (InitialConfig.isPreview() == 1){
-//            if (requestURI.equals("/dgut-sports/java/api/Course/selectCourse")){
-//                return returnFailMessage(response, new Result(Message.ERR_NOT_SELECTIVE_TIME));
-//            }
-//        }else {
-//            if (!InitialConfig.isSelective()){
-//
-//                return returnFailMessage(response, new Result(Message.ERR_NOT_OPEN_TIME));
-//            }
-//        }
+        // 校验预览时间与选课时间
+        LocalDateTime now = LocalDateTime.now();
+
+        if (InitialConfig.isPreview() == 1){
+            if (requestURI.equals("/dgut-sports/java/api/Course/selectCourse")){
+                return returnFailMessage(response, new Result(Message.ERR_NOT_SELECTIVE_TIME));
+            }
+        }else {
+            if (!InitialConfig.isSelective()){
+
+                return returnFailMessage(response, new Result(Message.ERR_NOT_OPEN_TIME));
+            }
+        }
 
         return true;
     }

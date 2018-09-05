@@ -5,6 +5,7 @@ import com.zemcho.pe.common.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -54,6 +55,15 @@ public class GlobalExceptionController {
 
         handle(e);
         return new Result(Message.ERR_SERVER_HTTP_REQUEST_METHOD_NOT_SUPPORTED);
+    }
+
+    /* 处理Content-Type错误异常 */
+    @ResponseBody
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public Result handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException e){
+
+        handle(e);
+        return new Result(Message.ERR_SERVER_HTTP_MEDIA_TYPE_NOT_SUPPORTED);
     }
 
     /* 处理其他异常 */

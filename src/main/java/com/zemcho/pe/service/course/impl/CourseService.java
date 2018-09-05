@@ -71,6 +71,8 @@ public class CourseService implements ICourseService {
     @Override
     public Result getCourseList(BasicDTO basicDTO) {
 
+        long start = System.currentTimeMillis();
+
         Integer page = basicDTO.getPage();
         Integer pageRows = basicDTO.getPageRows();
         String userNumber = basicDTO.getUserNumber();
@@ -106,6 +108,9 @@ public class CourseService implements ICourseService {
         result.put("is_preview",InitialConfig.isPreview());
         result.put("count", pageInfo.getTotal());
         result.put("page", pageInfo.getPageNum());
+
+        long end = System.currentTimeMillis();
+        log.info("运行时长：{} ms", end - start);
 
         return new Result(Message.SU_COURSE_LIST, result);
     }

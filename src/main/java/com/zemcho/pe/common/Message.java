@@ -12,10 +12,11 @@ public enum Message {
     SU_RECORD_WITHDRAW(1000,"获取退选记录成功"),
 
     /* ERROR */
+    ERR_SERVER_HTTP_MEDIA_TYPE_NOT_SUPPORTED(1001,"Content-Type的类型错误"),
     ERR_SERVER_HTTP_MESSAGE_NOT_READABLE(1001,"请求缺少body"),
     ERR_SERVER_HTTP_REQUEST_METHOD_NOT_SUPPORTED(1001,"请求方式不支持"),
     ERR_SERVER_EXCEPTION(1001,"服务器处理异常，请联系管理员"),
-    ERR_NOT_STUDENT(1002,"学生不存在或学生不在选课范围"),
+    ERR_NOT_STUDENT(1002,"学生不存在或学生没有选课资格"),
     ERR_NOT_TEACHER(1003,"教师不存在"),
     ERR_NOT_LOGIN(1004,"用户未登录"),
     ERR_NOT_AUTH(1005,"无权限访问"),
