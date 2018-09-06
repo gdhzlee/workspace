@@ -43,6 +43,9 @@ public class CourseService implements ICourseService {
     CourseService thisSelf;
 
     @Autowired
+    InitialConfig initialConfig;
+
+    @Autowired
     RedisTemplate<String, Integer> readIntegerRedisTemplate;
 
     @Autowired
@@ -105,7 +108,7 @@ public class CourseService implements ICourseService {
 
         Map<String, Object> result = new HashMap<>();
         result.put("list", list);
-        result.put("is_preview",InitialConfig.isPreview());
+        result.put("is_preview",initialConfig.isPreview());
         result.put("count", pageInfo.getTotal());
         result.put("page", pageInfo.getPageNum());
 
@@ -371,7 +374,6 @@ public class CourseService implements ICourseService {
         record.setUpdateTime(now);
         record.setStatus(1);
         record.setIsDel(false);
-        record.setExemptStatus(0);
         courseMapper.saveSelectSourceRecord(record);
 
         // TODO 保存选课日志

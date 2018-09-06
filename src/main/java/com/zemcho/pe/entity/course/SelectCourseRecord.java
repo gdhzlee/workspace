@@ -54,6 +54,4 @@ public class SelectCourseRecord {
     private Integer status;
 
     private Boolean isDel;
-
-    private Integer exemptStatus;
 }

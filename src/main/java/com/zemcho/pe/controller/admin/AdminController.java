@@ -25,7 +25,7 @@ public class AdminController {
     CourseMapper courseMapper;
 
     @Autowired
-    RedisTemplate<String,Integer> readIntegerRedisTemplate;
+    RedisTemplate<String, Integer> readIntegerRedisTemplate;
 
     @Autowired
     InitialConfig initialConfig;
@@ -33,55 +33,58 @@ public class AdminController {
     @Autowired
     Scheduler scheduler;
 
-    @GetMapping("/load/preview")
-    public void loadPreviewTime(){
-        InitialConfig.PREVIEW_TIME = courseMapper.selectPreviewTimeByYearAndTerm(InitialConfig.YEAR,InitialConfig.TERM);
-    }
-
-    @GetMapping("/load/selective")
-    public void loadSelectiveTime(){
-        initialConfig.initSelectiveTime();
-    }
-
-    @GetMapping("/load/userInfo")
-    public void loadUserInfo(){
-        initialConfig.initUserInfo();
-    }
-
-    @GetMapping("/load/course/count")
-    public void loadCourseCount(){
-        initialConfig.initCourseCount();
-    }
-
-    @GetMapping("/load/schedules")
-    public void loadClassSchedules(){
-        initialConfig.initClassSchedules();
-    }
+//    @GetMapping("/load/preview")
+//    public void loadPreviewTime() {
+//        InitialConfig.PREVIEW_TIME = courseMapper.selectPreviewTimeByYearAndTerm(InitialConfig.YEAR, InitialConfig.TERM);
+//    }
+//
+//    @GetMapping("/load/selective")
+//    public void loadSelectiveTime() {
+//        initialConfig.initSelectiveTime();
+//    }
+//
+//    @GetMapping("/load/userInfo")
+//    public void loadUserInfo() {
+//        initialConfig.initUserInfo();
+//    }
+//
+//    @GetMapping("/load/course/count")
+//    public void loadCourseCount() {
+//        initialConfig.initCourseCount();
+//    }
+//
+//    @GetMapping("/load/schedules")
+//    public void loadClassSchedules() {
+//        initialConfig.initClassSchedules();
+//    }
 
     @GetMapping("/load/all")
-    public void loadAll(){
+    public Result loadAll() {
         initialConfig.initSelectiveTime();
+        initialConfig.initPreviewTime();
         initialConfig.initUserInfo();
         initialConfig.initCourseCount();
         initialConfig.initClassSchedules();
+
+        return new Result(Message.SU_DATA_SYNCHRONIZATION_SUCCESS);
     }
 
     @GetMapping("/redis")
-    public void testRedis(@RequestParam(defaultValue = "10000") int cli){
+    public void testRedis(@RequestParam(defaultValue = "10000") int cli) {
 
         Long start = System.currentTimeMillis();
         System.out.println(cli);
         ExecutorService executorService = Executors.newCachedThreadPool();
-        for (int i = 0; i < cli; i ++){
-            executorService.execute(() ->{
+        for (int i = 0; i < cli; i++) {
+            executorService.execute(() -> {
                 readIntegerRedisTemplate.opsForValue().get(InitialConfig.SCHEDULE_PREFIX + 200 + new Random(200).nextInt());
             });
         }
 
         executorService.shutdown();
 
-        while (true){
-            if (executorService.isTerminated()){
+        while (true) {
+            if (executorService.isTerminated()) {
                 break;
             }
         }
@@ -92,13 +95,13 @@ public class AdminController {
     }
 
     @GetMapping("/quartz/start")
-    public Result startQuartz(CronSchedule cronSchedule, String cron){
+    public Result startQuartz(CronSchedule cronSchedule, String cron) throws SchedulerException {
         String cronString = null;
 
-        if (cronSchedule != null){
+        if (cronSchedule != null) {
             cronString = cronSchedule.getValue();
-        }else {
-            if (cron != null){
+        } else {
+            if (cron != null) {
                 cronString = cron;
             }
         }
@@ -107,53 +110,45 @@ public class AdminController {
         JobDetail jobDetail = JobBuilder.newJob(CourseNumberJob.class).withIdentity(courseNumberJobName, courseNumberJobName).build();
         Trigger trigger = TriggerBuilder.newTrigger().withIdentity(courseNumberJobName, courseNumberJobName).withSchedule(CronScheduleBuilder.cronSchedule(cronString)).build();
 
-        try {
-            boolean exists = scheduler.checkExists(JobKey.jobKey(courseNumberJobName));
 
-            if (exists){
-                return new Result(Message.ERR_COURSE_NUMBER_JOB_EXIST);
-            }
+        boolean exists = scheduler.checkExists(JobKey.jobKey(courseNumberJobName));
 
-            scheduler.scheduleJob(jobDetail, trigger);
-            if (!scheduler.isShutdown()) {
-                scheduler.start();
-            }
-
-            return new Result(Message.SU_START_COURSE_NUMBER_JOB);
-        } catch (SchedulerException e) {
-            e.printStackTrace();
+        if (exists) {
+            return new Result(Message.ERR_COURSE_NUMBER_JOB_EXIST);
         }
 
-        return null;
+        scheduler.scheduleJob(jobDetail, trigger);
+        if (!scheduler.isShutdown()) {
+            scheduler.start();
+        }
+
+        return new Result(Message.SU_START_COURSE_NUMBER_JOB);
+
     }
 
     @GetMapping("/quartz/shutdown")
-    public Result shutdownQuartz(){
+    public Result shutdownQuartz() throws SchedulerException {
         String courseNumberJobName = InitialConfig.COURSE_NUMBER_JOB_NAME;
-        try {
-            boolean exists = scheduler.checkExists(JobKey.jobKey(courseNumberJobName));
-            if (exists == false){
 
-                return new Result(Message.ERR_COURSE_NUMBER_JOB_NOT_EXIST);
-            }
+        boolean exists = scheduler.checkExists(JobKey.jobKey(courseNumberJobName));
+        if (exists == false) {
 
-            scheduler.shutdown();
-
-            return new Result(Message.SU_SHUTDOWN_COURSE_NUMBER_JOB);
-        } catch (SchedulerException e) {
-            e.printStackTrace();
+            return new Result(Message.ERR_COURSE_NUMBER_JOB_NOT_EXIST);
         }
 
-        return null;
+        scheduler.shutdown();
+
+        return new Result(Message.SU_SHUTDOWN_COURSE_NUMBER_JOB);
+
     }
 
-    enum CronSchedule{
+    enum CronSchedule {
         MINUTE("0 */2 * * * ?"),
         HALF_HOUR("0 */30 * * * ?");
 
         private String value;
 
-        CronSchedule(String value){
+        CronSchedule(String value) {
             this.value = value;
         }
 

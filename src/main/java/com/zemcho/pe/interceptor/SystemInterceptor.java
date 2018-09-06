@@ -46,6 +46,9 @@ public class SystemInterceptor implements HandlerInterceptor {
     @Autowired
     RedisTemplate<String,String> ehallStringRedisTemplate;
 
+    @Autowired
+    InitialConfig initialConfig;
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
 
@@ -107,12 +110,12 @@ public class SystemInterceptor implements HandlerInterceptor {
 
 
         // 校验预览时间与选课时间
-        if (InitialConfig.isPreview() == 1){
+        if (initialConfig.isPreview() == 1){
             if (requestURI.equals("/dgut-sports/java/api/Course/selectCourse")){
                 return returnFailMessage(response, new Result(Message.ERR_NOT_SELECTIVE_TIME));
             }
         }else {
-            if (!InitialConfig.isSelective()){
+            if (!initialConfig.isSelective()){
 
                 return returnFailMessage(response, new Result(Message.ERR_NOT_OPEN_TIME));
             }

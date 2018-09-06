@@ -86,13 +86,19 @@ public class InitialConfig {
     public final static String COURSE_NUM = "course_num:";
     public final static String RGEX = "uid\";i:(.*?);";
     public final static String COURSE_NUMBER_JOB_NAME = "course_number_job";
+    public final static String SELECTIVE_TIME_TOTAL_PREFIX = "time:selective:total";
+    public final static String SELECTIVE_TIME_FIRST_PREFIX = "time:selective:first";
+    public final static String SELECTIVE_TIME_SECOND_PREFIX = "time:selective:second";
+    public final static String PREVIEW_TIME_PREFIX = "time:preview";
+    public final static String YEAR_PREFIX = "time:year";
+    public final static String TERM_PREFIX = "time:term";
 
 
     public static Map<Integer, Integer> numberMap = new LinkedHashMap<>();
-    public static List<SelectiveTimeVO> TOTAL = new ArrayList<>();
-    public static List<SelectiveTimeVO> FIRST = new ArrayList<>();
-    public static List<SelectiveTimeVO> SECOND = new ArrayList<>();
-    public static PreviewTimeVO PREVIEW_TIME;
+//    public List<SelectiveTimeVO> TOTAL = new ArrayList<>();
+//    public List<SelectiveTimeVO> FIRST = new ArrayList<>();
+//    public List<SelectiveTimeVO> SECOND = new ArrayList<>();
+//    public PreviewTimeVO PREVIEW_TIME;
     public static Integer TERM = getTerm();
     public static Integer YEAR = getYear(TERM);
     public static Integer FORM_ID = 0;
@@ -106,17 +112,33 @@ public class InitialConfig {
     @Autowired
     RedisTemplate<String, Object> writeObjectRedisTemplate;
 
+    @Autowired
+    RedisTemplate<String, Object> readObjectRedisTemplate;
+
     /* 初始化选课时间 */
     public void initSelectiveTime(){
         Integer configId = courseMapper.selectConfigIdByYearAndTerm(InitialConfig.YEAR, InitialConfig.TERM);
         System.out.println("configId = " + configId);
         if (configId != null) {
-            InitialConfig.FIRST = courseMapper.selectTimeList(configId, true);
-            InitialConfig.SECOND = courseMapper.selectTimeList(configId, false);
-            InitialConfig.TOTAL.clear();
-            InitialConfig.TOTAL.addAll(InitialConfig.FIRST);
-            InitialConfig.TOTAL.addAll(InitialConfig.SECOND);
+
+            List<SelectiveTimeVO> first = courseMapper.selectTimeList(configId, true);
+            List<SelectiveTimeVO> second  = courseMapper.selectTimeList(configId, false);
+            List<SelectiveTimeVO> total = new ArrayList<>();
+            total.addAll(first);
+            total.addAll(second);
+
+            writeObjectRedisTemplate.opsForValue().set(SELECTIVE_TIME_FIRST_PREFIX, first);
+            writeObjectRedisTemplate.opsForValue().set(SELECTIVE_TIME_SECOND_PREFIX, second);
+            writeObjectRedisTemplate.opsForValue().set(SELECTIVE_TIME_TOTAL_PREFIX, total);
         }
+    }
+
+    /* 初始化预览时间 */
+    @PostConstruct
+    public void initPreviewTime(){
+
+        PreviewTimeVO previewTimeVO = courseMapper.selectPreviewTimeByYearAndTerm(YEAR,TERM);
+        writeObjectRedisTemplate.opsForValue().set(PREVIEW_TIME_PREFIX, previewTimeVO);
     }
 
     /* 初始化课程数量 */
@@ -163,21 +185,18 @@ public class InitialConfig {
 
         String yearTerm = getYearTerm(YEAR, TERM);
         List<UserInfoVO> userInfoVOS = courseMapper.selectUserInfoByCampusAndYearAndTerm(YEAR, TERM);
+
+        List<SelectiveTimeVO> first = (List<SelectiveTimeVO>) readObjectRedisTemplate.opsForValue().get(SELECTIVE_TIME_FIRST_PREFIX);
+        List<SelectiveTimeVO> second = (List<SelectiveTimeVO>) readObjectRedisTemplate.opsForValue().get(SELECTIVE_TIME_SECOND_PREFIX);
+
         for (UserInfoVO userInfo : userInfoVOS) {
-            userInfo.setFirst(FIRST);
-            userInfo.setSecond(SECOND);
+            userInfo.setFirst(first);
+            userInfo.setSecond(second);
             userInfo.setYearTerm(yearTerm);
 
             String username = userInfo.getUsername();
             writeObjectRedisTemplate.opsForValue().set(USER_INFO_PREFIX + username, userInfo);
         }
-    }
-
-    /* 初始化预览时间 */
-    @PostConstruct
-    public void initPreviewTime(){
-
-        PREVIEW_TIME = courseMapper.selectPreviewTimeByYearAndTerm(YEAR,TERM);
     }
 
     /* 初始化预览时间 */
@@ -197,20 +216,13 @@ public class InitialConfig {
     /* 定时修改预览时间 */
     @Scheduled(cron = "0 0 0 * * ?")
     public void modifyPreviewTime() {
-        PREVIEW_TIME = courseMapper.selectPreviewTimeByYearAndTerm(YEAR,TERM);
+        initPreviewTime();
     }
 
     /* 定时修改选课时间 */
     @Scheduled(cron = "0 0 0 * * ?")
     public void modifySelectiveTime() {
-        Integer configId = courseMapper.selectConfigIdByYearAndTerm(YEAR, TERM);
-        if (configId != null) {
-            FIRST = courseMapper.selectTimeList(configId, true);
-            SECOND = courseMapper.selectTimeList(configId, false);
-            TOTAL.clear();
-            TOTAL.addAll(FIRST);
-            TOTAL.addAll(SECOND);
-        }
+        initSelectiveTime();
     }
 
     /* 获取学期 */
@@ -249,13 +261,15 @@ public class InitialConfig {
     private static DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     /* 是否预览时间 */
-    public static int isPreview(){
+    public int isPreview(){
+
+        PreviewTimeVO previewTime = (PreviewTimeVO) readObjectRedisTemplate.opsForValue().get(PREVIEW_TIME_PREFIX);
 
         LocalDateTime now = LocalDateTime.now();
-        boolean b = now.compareTo(InitialConfig.PREVIEW_TIME.getPreviewStartTime()) >= 0
-                && now.compareTo(InitialConfig.PREVIEW_TIME.getPreviewEndTime()) <= 0;
-        log.info("预览开始时间:{}",formatter.format(PREVIEW_TIME.getPreviewStartTime()));
-        log.info("预览结束时间:{}",formatter.format(PREVIEW_TIME.getPreviewEndTime()));
+        boolean b = now.compareTo(previewTime.getPreviewStartTime()) >= 0
+                && now.compareTo(previewTime.getPreviewEndTime()) <= 0;
+        log.info("预览开始时间:{}",formatter.format(previewTime.getPreviewStartTime()));
+        log.info("预览结束时间:{}",formatter.format(previewTime.getPreviewEndTime()));
         log.info("当前时间:{}",formatter.format(now));
         log.info("是否处于预览时间:{}",b);
 
@@ -263,11 +277,12 @@ public class InitialConfig {
     }
 
     /* 是否选课时间 */
-    public static boolean isSelective(){
+    public boolean isSelective(){
 
+        List<SelectiveTimeVO> totalSelectiveTime = (List<SelectiveTimeVO>) readObjectRedisTemplate.opsForValue().get(SELECTIVE_TIME_TOTAL_PREFIX);
         LocalDateTime now = LocalDateTime.now();
 
-        for (SelectiveTimeVO selectiveTime : TOTAL){
+        for (SelectiveTimeVO selectiveTime : totalSelectiveTime){
             LocalDateTime start = selectiveTime.getStartTime().toLocalDateTime();
             LocalDateTime end = selectiveTime.getEndTime().toLocalDateTime();
 

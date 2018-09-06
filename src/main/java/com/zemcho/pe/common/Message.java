@@ -12,6 +12,7 @@ public enum Message {
     SU_RECORD_WITHDRAW(1000,"获取退选记录成功"),
     SU_START_COURSE_NUMBER_JOB(1000,"更新班级已选人数的工作任务启动成功"),
     SU_SHUTDOWN_COURSE_NUMBER_JOB(1000,"更新班级已选人数的工作任务关闭成功"),
+    SU_DATA_SYNCHRONIZATION_SUCCESS(1000,"数据同步成功"),
 
     /* ERROR */
     ERR_SERVER_HTTP_MEDIA_TYPE_NOT_SUPPORTED(1001,"Content-Type的类型错误"),

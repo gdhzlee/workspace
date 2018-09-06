@@ -69,8 +69,7 @@
                                                create_time,
                                                update_time,
                                                status,
-                                               is_del,
-                                               exempt_status)
+                                               is_del)
         VALUES (#{year},
                 #{term},
                 #{uid},
@@ -82,8 +81,7 @@
                 #{createTime},
                 #{updateTime},
                 #{status},
-                #{isDel},
-                #{exemptStatus})
+                #{isDel})
     </insert>
 
     <select id="selectSelectedCourseRecord" resultType="com.zemcho.pe.controller.course.vo.SelectCourseRecordVO">

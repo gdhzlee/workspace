@@ -124,12 +124,6 @@
             <version>${fastjson.version}</version>
         </dependency>
 
-        <!-- 监控 -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-
         <!-- Quartz -->
         <!-- 定时任务 -->
         <dependency>
@@ -146,6 +140,7 @@
     </dependencies>
 
     <build>
+        <finalName>${artifactId}</finalName>
 
         <resources>
             <resource>

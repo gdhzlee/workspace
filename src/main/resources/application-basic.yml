@@ -12,13 +12,6 @@ spring:
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
 
-# SQL打印
-logging:
-  level:
-    com:
-      zemcho:
-        pe:
-          mapper: debug
 # 分页
 pagehelper:
   helper-dialect: mysql
@@ -27,14 +20,3 @@ pagehelper:
   params: count=countSql
   offset-as-page-num: true
   row-bounds-with-count: true
-
-# Actuator
-management:
-  endpoints:
-    web:
-      base-path: manage
-      exposure:
-        include: "*"
-  endpoint:
-    health:
-      show-details: always

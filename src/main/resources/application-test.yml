@@ -13,7 +13,7 @@ spring:
         min-idle: 0
     # 大厅
     ehall:
-      host: 219.222.189.156
+      host: 219.222.189.81
       port: 6379
       database: 0
       password: klinson
@@ -46,8 +46,16 @@ spring:
       minimum-idle: 5
       idle-timeout: 10000
       auto-commit: true
-      #pool-name: Hikari_Connection_Pool
+      pool-name: Hikari_Connection_Pool
       max-lifetime: 1800000
       connection-timeout: 30000
       connection-test-query: SELECT 1
     type: com.zaxxer.hikari.HikariDataSource
+
+# SQL打印
+logging:
+  level:
+    com:
+      zemcho:
+        pe:
+          mapper: debug
