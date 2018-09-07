@@ -17,20 +17,20 @@ public class Result implements Serializable {
     private int code;
 
     //提示信息
-    private String msg;
+    private String message;
 
     //具体的内容, total,pageNum,list
     private Object info;
 
-    public Result(int code, String msg, Object info) {
+    public Result(int code, String message, Object info) {
         this.code = code;
-        this.msg = msg;
+        this.message = message;
         this.info = info;
     }
 
-    public Result(int code, String msg) {
+    public Result(int code, String message) {
         this.code = code;
-        this.msg = msg;
+        this.message = message;
         this.info = new HashMap<>();
     }
 
@@ -40,13 +40,13 @@ public class Result implements Serializable {
 
     public Result(Message message){
         this.code = message.getCode();
-        this.msg = message.getMessage();
-        this.info = -1;
+        this.message = message.getMessage();
+        this.info = new HashMap<>();
     }
 
     public Result(Message message, Object info){
         this.code = message.getCode();
-        this.msg = message.getMessage();
+        this.message = message.getMessage();
         this.info = info;
     }
 

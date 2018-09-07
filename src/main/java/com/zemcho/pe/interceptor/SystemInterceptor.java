@@ -60,7 +60,7 @@ public class SystemInterceptor implements HandlerInterceptor {
         //TODO 不知道要不要， 校验用户登录
         String authorization = httpServletRequest.getHeader("authorization");
         if (authorization == null){
-            return returnFailMessage(response, new Result(Message.ERR_NOT_LOGIN));
+            return returnFailMessage(response, new Result(Message.ERR_NOT_LOGIN, -2));
         }
 
         LettuceConnectionFactory factory = (LettuceConnectionFactory) ehallStringRedisTemplate.getConnectionFactory();
@@ -72,13 +72,13 @@ public class SystemInterceptor implements HandlerInterceptor {
         String var0 = ehallStringRedisTemplate.opsForValue().get("ehall_zc_session_" + authorization);
 
         if (var0 == null || "".equals(var0)){
-            return returnFailMessage(response, new Result(Message.ERR_NOT_LOGIN));
+            return returnFailMessage(response, new Result(Message.ERR_NOT_LOGIN, -2));
         }
 
         log.info("authorization:{}", var0);
         String uid = getUid(var0, InitialConfig.RGEX);
         if (uid.equals("")){
-            return returnFailMessage(response, new Result(Message.ERR_ERROR_AUTHORIZATION_VALUE));
+            return returnFailMessage(response, new Result(Message.ERR_ERROR_AUTHORIZATION_VALUE, -2));
         }
         request.setAttribute("uid",Integer.valueOf(uid));
 
@@ -112,12 +112,12 @@ public class SystemInterceptor implements HandlerInterceptor {
         // 校验预览时间与选课时间
         if (initialConfig.isPreview() == 1){
             if (requestURI.equals("/dgut-sports/java/api/Course/selectCourse")){
-                return returnFailMessage(response, new Result(Message.ERR_NOT_SELECTIVE_TIME));
+                return returnFailMessage(response, new Result(Message.ERR_NOT_SELECTIVE_TIME, -2));
             }
         }else {
             if (!initialConfig.isSelective()){
 
-                return returnFailMessage(response, new Result(Message.ERR_NOT_OPEN_TIME));
+                return returnFailMessage(response, new Result(Message.ERR_NOT_OPEN_TIME, -2));
             }
         }
 

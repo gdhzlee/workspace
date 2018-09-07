@@ -150,9 +150,7 @@ public class InitialConfig {
         for (CourseCountVO courseCount : courseCountVOS) {
             int count = courseCount.getCount() == null ? 0 : courseCount.getCount();
             Integer courseId = courseCount.getCourseId();
-            if (courseId <= 249) {
-                i += count;
-            }
+            i += count;
             writeIntegerRedisTemplate.opsForValue().set(SCHEDULE_PREFIX + courseId, count);
         }
 

@@ -3,8 +3,12 @@
 <mapper namespace="com.zemcho.pe.mapper.course.CourseMapper">
 
 
+    <!-- 获取课表 -->
     <select id="selectCourseList" resultType="com.zemcho.pe.controller.course.vo.CourseVO">
-        SELECT a.class_id        AS 'classId',
+        SELECT a.`year`,
+               a.term,
+               a.campus,
+               a.class_id        AS 'classId',
                a.section         AS 'sectionTime',
                b.teacher_uid     AS 'teacherId',
                b.id              AS 'schId',
@@ -15,21 +19,27 @@
                c.sex,
                d.`name`          AS 'courseSite',
                e.`name`          AS 'teacherName',
-               f.year,
+               f.YEAR,
                f.term,
                f.week_class_time AS 'weekClassTime'
         FROM zc_sports_class_section AS a
-                 INNER JOIN zc_sports_schedules AS b ON a.section = b.section
+                 INNER JOIN zc_sports_schedules AS b ON a.`year` = b.`year`
+                                                            AND a.term = b.term
                                                             AND a.campus = b.campus
+                                                            AND a.section = b.section
                                                             AND b.is_del = 0
                  INNER JOIN zc_sports_course AS c ON b.course_id = c.id
                  INNER JOIN zc_sports_site AS d ON c.site_id = d.id
                  INNER JOIN zc_user AS e ON b.teacher_uid = e.id
-                 INNER JOIN zc_sports_config AS f ON f.year = #{year} AND f.term = #{term}
-        WHERE a.class_id = #{classId}
+                 INNER JOIN zc_sports_config AS f ON a.`year` = f.`year`
+                                                         AND a.term = f.term
+        WHERE a.class_id = ${classId}
+          AND a.`year` = ${year}
+          AND a.term = ${term}
         ORDER BY class_id ASC
     </select>
 
+    <!-- 获取选课时间 -->
     <select id="selectTimeList" resultType="com.zemcho.pe.controller.course.vo.SelectiveTimeVO">
         SELECT campus,
                start_time                AS 'start',
@@ -41,6 +51,7 @@
           AND config_id = #{configId}
     </select>
 
+    <!-- 获取选课配置 -->
     <select id="selectConfigIdByYearAndTerm" resultType="java.lang.Integer">
         SELECT id
         FROM zc_sports_config
@@ -48,15 +59,19 @@
           AND term = #{term}
     </select>
 
+    <!-- 获取课程可选数 -->
     <select id="selectCourseCountByYearAndTerm" resultType="com.zemcho.pe.controller.course.vo.CourseCountVO">
-        SELECT b.id AS 'courseId', b.limit_person AS 'count'
-        FROM zc_sports_course AS a
-                 INNER JOIN zc_sports_schedules AS b ON a.id = b.course_id
-                 INNER JOIN zc_sports_site AS c ON a.site_id = c.id
-                 INNER JOIN zc_user AS d ON b.teacher_uid = d.id
-        ORDER BY b.id
+        SELECT a.id AS 'courseId', a.limit_person AS 'count'
+        FROM zc_sports_schedules AS a
+                 INNER JOIN zc_sports_course AS b ON a.course_id = b.id
+                 INNER JOIN zc_sports_site AS c ON b.site_id = c.id
+                 INNER JOIN zc_user AS d ON a.teacher_uid = d.id
+        WHERE a.`year` = ${year}
+          AND a.term = ${term}
+        ORDER BY a.id
     </select>
 
+    <!-- 保存选课记录 -->
     <insert id="saveSelectSourceRecord" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         INSERT INTO zc_sports_stu_success_sch (year,
                                                term,
@@ -84,6 +99,7 @@
                 #{isDel})
     </insert>
 
+    <!-- 选择选课记录 -->
     <select id="selectSelectedCourseRecord" resultType="com.zemcho.pe.controller.course.vo.SelectCourseRecordVO">
         SELECT sch_id AS 'schId', is_del AS 'isDel'
         FROM zc_sports_stu_success_sch
@@ -92,6 +108,7 @@
           AND is_del = 0
     </select>
 
+    <!-- 取消选课 -->
     <update id="cancelTakeCourse">
         UPDATE zc_sports_stu_success_sch
         SET is_del = 1
@@ -100,6 +117,7 @@
           AND is_del = 0
     </update>
 
+    <!-- 获取选课学生信息 -->
     <select id="selectUserInfoByCampusAndYearAndTerm" resultType="com.zemcho.pe.controller.course.vo.UserInfoVO">
         SELECT a.campus,
                b.uid,
@@ -123,11 +141,13 @@
         ORDER BY c.username ASC
     </select>
 
+    <!-- 获取选课班级 -->
     <select id="selectClassIdAll" resultType="java.lang.Integer">
         SELECT DISTINCT (class_id)
         FROM zc_sports_class_section
     </select>
 
+    <!-- 获取预览时间 -->
     <select id="selectPreviewTimeByYearAndTerm" resultType="com.zemcho.pe.controller.course.vo.PreviewTimeVO">
         SELECT FROM_UNIXTIME(preview_start_time) AS 'previewStartTime',
                FROM_UNIXTIME(preview_end_time)   AS 'previewEndTime'
@@ -136,6 +156,7 @@
           AND term = #{term}
     </select>
 
+    <!-- 获取学生信息 -->
     <select id="selectUserInfoById" resultType="com.zemcho.pe.controller.course.vo.UserInfoVO">
         SELECT a.campus,
                b.uid,
@@ -156,28 +177,35 @@
                  INNER JOIN zc_class AS e ON a.class_id = e.id
     </select>
 
+    <!-- 获取事务表单ID -->
     <select id="selectFormIdByCode" resultType="java.lang.Integer">
         SELECT form_id
         FROM zc_form_config
         WHERE code = #{code}
     </select>
 
+    <!-- 保存选课日志 -->
     <insert id="saveSelectCourseLog" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         INSERT INTO zc_sports_course_selection_log (uid, ip, sch_id, create_time, update_time)
         VALUES (#{uid}, #{ip}, #{schId}, #{createTime}, #{updateTime})
     </insert>
 
+    <!-- 保存选课成绩记录 -->
     <insert id="saveCourseResults" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         INSERT INTO zc_sports_stu_results (year, term, campus, uid, course_id, teacher_uid, create_time, update_time)
         VALUES (#{year}, #{term}, #{campus}, #{uid}, #{courseId}, #{teacherId}, #{createTime}, #{updateTime})
     </insert>
 
+    <!-- 获取选课成绩记录 -->
     <select id="selectCourseResultsByUid" resultType="com.zemcho.pe.entity.course.CourseResults">
         SELECT id, year, term, campus, course_id AS 'courseId', teacher_uid AS 'teacherId', uid
         FROM zc_sports_stu_results
-        WHERE uid = #{uid} AND year = #{year} AND term = #{term}
+        WHERE uid = #{uid}
+          AND year = #{year}
+          AND term = #{term}
     </select>
 
+    <!-- 更新选课成绩记录 -->
     <update id="updateCourseResults">
         UPDATE zc_sports_stu_results
         SET campus      = #{campus},
@@ -188,11 +216,13 @@
           AND uid = #{uid}
     </update>
 
+    <!-- 保存事务日志 -->
     <insert id="saveFormLog" useGeneratedKeys="true" keyColumn="id" keyProperty="id">
         INSERT INTO zc_form_log (form_id, data_id, uid, faculty, create_at, update_at, status)
         VALUES (#{formId}, #{dataId}, #{uid}, #{faculty}, #{createTime}, #{updateTime}, #{status})
     </insert>
 
+    <!-- 更新班级已选人数 -->
     <update id="updateCourseNumber">
         UPDATE zc_sports_class_list
         SET course_num  = #{courseNumber},

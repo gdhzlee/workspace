@@ -84,13 +84,19 @@ public class CourseService implements ICourseService {
         // 判断用户是否存在
         UserInfoVO userInfo = (UserInfoVO) readObjectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
         if (userInfo == null) {
-            return new Result(Message.ERR_NOT_STUDENT);
+            return new Result(Message.ERR_NOT_STUDENT, -2);
         }
 
         // 校验用户认证与学号的匹配
         Integer uid = (Integer) request.getAttribute("uid");
         if (!userInfo.getUid().equals(uid)){
             return new Result(Message.ERR_ERROR_AUTHORIZATION_RELATIVE);
+        }
+
+        // 判断是否已选
+        String selected = (String) readObjectRedisTemplate.opsForValue().get(InitialConfig.SELECTED_PREFIX + userNumber);
+        if (selected != null){
+            return new Result(Message.ERR_HAD_SELECTED);
         }
 
         // 获取对应班级的课表
@@ -135,7 +141,7 @@ public class CourseService implements ICourseService {
         // 判断用户是否存在
         UserInfoVO userInfo = (UserInfoVO) readObjectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
         if (userInfo == null) {
-            return new Result(Message.ERR_NOT_STUDENT);
+            return new Result(Message.ERR_NOT_STUDENT, -2);
         }
 
         // 校验用户认证与学号的匹配
@@ -247,7 +253,7 @@ public class CourseService implements ICourseService {
         // 判断用户是否存在
         UserInfoVO userInfoVO = (UserInfoVO) readObjectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
         if (userInfoVO == null){
-            return new Result(Message.ERR_NOT_STUDENT);
+            return new Result(Message.ERR_NOT_STUDENT, -2);
         }
 
         String username = userInfoVO.getUsername();
@@ -302,14 +308,14 @@ public class CourseService implements ICourseService {
         // 判断用户是否存在
         UserInfoVO userInfo = (UserInfoVO) readObjectRedisTemplate.opsForValue().get(InitialConfig.USER_INFO_PREFIX + userNumber);
         if (userInfo == null) {
-            return new Result(Message.ERR_NOT_STUDENT);
+            return new Result(Message.ERR_NOT_STUDENT, -2);
         }
 
         // 校验用户认证与学号的匹配
         Integer uid = (Integer) request.getAttribute("uid");
         System.out.println(uid);
         if (!userInfo.getUid().equals(uid)){
-            return new Result(Message.ERR_ERROR_AUTHORIZATION_RELATIVE);
+            return new Result(Message.ERR_ERROR_AUTHORIZATION_RELATIVE, -2);
         }
 
         return new Result(Message.SU_STUDENT_INFO, userInfo);
