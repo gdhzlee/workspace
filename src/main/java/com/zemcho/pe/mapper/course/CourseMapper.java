@@ -42,7 +42,7 @@ public interface CourseMapper {
     PreviewTimeVO selectPreviewTimeByYearAndTerm(@Param("year") Integer year, @Param("term") Integer term);
 
     /* 获取用户信息 */
-    UserInfoVO selectUserInfoById(@Param("id") Integer id);
+//    UserInfoVO selectUserInfoById(@Param("id") Integer id);
 
     /* 获取表单ID */
     Integer selectFormIdByCode(@Param("code") String code);
@@ -63,4 +63,15 @@ public interface CourseMapper {
     Integer saveFormLog(FormLog log);
 
     Integer updateCourseNumber(@Param("year") Integer year, @Param("term") Integer term, @Param("classId") Integer classId, @Param("courseNumber") Integer courseNumber, @Param("updateTime") Long updateTime);
+
+
+    Integer deleteFormLog(@Param("year")Integer year, @Param("term")Integer term, @Param("time")Long time);
+
+    Integer deleteCourseResults(@Param("year")Integer year, @Param("term")Integer term, @Param("time")Long time);
+
+    Integer deleteCourseRecord(@Param("year")Integer year, @Param("term")Integer term, @Param("time")Long time);
+
+    Integer deleteCourseLog(@Param("year")Integer year, @Param("term")Integer term, @Param("time")Long time);
+
+    Integer resetCourseNumber(@Param("year")Integer year, @Param("term")Integer term, @Param("time")Long time);
 }

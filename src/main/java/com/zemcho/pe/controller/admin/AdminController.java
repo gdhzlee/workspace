@@ -33,33 +33,9 @@ public class AdminController {
     @Autowired
     Scheduler scheduler;
 
-//    @GetMapping("/load/preview")
-//    public void loadPreviewTime() {
-//        InitialConfig.PREVIEW_TIME = courseMapper.selectPreviewTimeByYearAndTerm(InitialConfig.YEAR, InitialConfig.TERM);
-//    }
-//
-//    @GetMapping("/load/selective")
-//    public void loadSelectiveTime() {
-//        initialConfig.initSelectiveTime();
-//    }
-//
-//    @GetMapping("/load/userInfo")
-//    public void loadUserInfo() {
-//        initialConfig.initUserInfo();
-//    }
-//
-//    @GetMapping("/load/course/count")
-//    public void loadCourseCount() {
-//        initialConfig.initCourseCount();
-//    }
-//
-//    @GetMapping("/load/schedules")
-//    public void loadClassSchedules() {
-//        initialConfig.initClassSchedules();
-//    }
-
     @GetMapping("/load/all")
     public Result loadAll() {
+
         initialConfig.initSelectiveTime();
         initialConfig.initPreviewTime();
         initialConfig.initUserInfo();
@@ -69,30 +45,16 @@ public class AdminController {
         return new Result(Message.SU_DATA_SYNCHRONIZATION_SUCCESS);
     }
 
-    @GetMapping("/redis")
-    public void testRedis(@RequestParam(defaultValue = "10000") int cli) {
-
-        Long start = System.currentTimeMillis();
-        System.out.println(cli);
-        ExecutorService executorService = Executors.newCachedThreadPool();
-        for (int i = 0; i < cli; i++) {
-            executorService.execute(() -> {
-                readIntegerRedisTemplate.opsForValue().get(InitialConfig.SCHEDULE_PREFIX + 200 + new Random(200).nextInt());
-            });
-        }
-
-        executorService.shutdown();
-
-        while (true) {
-            if (executorService.isTerminated()) {
-                break;
-            }
-        }
-
-        Long end = System.currentTimeMillis();
-
-        System.out.println(end - start);
+    @GetMapping("/datasource/reset")
+    public Result resetDataSource(){
+        courseMapper.deleteCourseLog(initialConfig.YEAR, initialConfig.TERM, 1535299200L);
+        courseMapper.deleteCourseRecord(initialConfig.YEAR, initialConfig.TERM, 1535299200L);
+        courseMapper.deleteCourseResults(initialConfig.YEAR, initialConfig.TERM, 1535299200L);
+        courseMapper.deleteFormLog(initialConfig.YEAR, initialConfig.TERM, 1535299200L);
+        courseMapper.resetCourseNumber(initialConfig.YEAR, initialConfig.TERM, 1535299200L);
+        return new Result(200,"数据库数据重置成功");
     }
+
 
     @GetMapping("/quartz/start")
     public Result startQuartz(CronSchedule cronSchedule, String cron) throws SchedulerException {

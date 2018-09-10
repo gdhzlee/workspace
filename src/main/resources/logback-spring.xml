@@ -41,9 +41,6 @@
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="INFO" />
-    </root>
-
-    <root level="ERROR">
         <appender-ref ref="ERROR" />
     </root>
 

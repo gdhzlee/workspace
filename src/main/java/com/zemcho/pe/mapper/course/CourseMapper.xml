@@ -5,50 +5,52 @@
 
     <!-- 获取课表 -->
     <select id="selectCourseList" resultType="com.zemcho.pe.controller.course.vo.CourseVO">
-        SELECT a.`year`,
-               a.term,
-               a.campus,
-               a.class_id        AS 'classId',
-               a.section         AS 'sectionTime',
-               b.teacher_uid     AS 'teacherId',
-               b.id              AS 'schId',
-               b.course_id       AS 'courseId',
-               b.limit_person    AS 'limitPerson',
-               c.`name`          AS 'courseName',
-               c.campus          AS 'courseCampus',
-               c.sex,
-               d.`name`          AS 'courseSite',
-               e.`name`          AS 'teacherName',
-               f.YEAR,
-               f.term,
-               f.week_class_time AS 'weekClassTime'
+        SELECT
+            a.`year`,
+            a.term,
+            a.campus,
+            a.class_id        AS 'classId',
+            a.section         AS 'sectionTime',
+            b.teacher_uid     AS 'teacherId',
+            b.id              AS 'schId',
+            b.course_id       AS 'courseId',
+            b.limit_person    AS 'limitPerson',
+            c.`name`          AS 'courseName',
+            c.campus          AS 'courseCampus',
+            c.sex,
+            d.`name`          AS 'courseSite',
+            e.`name`          AS 'teacherName',
+            f.YEAR,
+            f.term,
+            f.week_class_time AS 'weekClassTime'
         FROM zc_sports_class_section AS a
-                 INNER JOIN zc_sports_schedules AS b ON a.`year` = b.`year`
-                                                            AND a.term = b.term
-                                                            AND a.campus = b.campus
-                                                            AND a.section = b.section
-                                                            AND b.is_del = 0
-                 INNER JOIN zc_sports_course AS c ON b.course_id = c.id
-                 INNER JOIN zc_sports_site AS d ON c.site_id = d.id
-                 INNER JOIN zc_user AS e ON b.teacher_uid = e.id
-                 INNER JOIN zc_sports_config AS f ON a.`year` = f.`year`
-                                                         AND a.term = f.term
+            INNER JOIN zc_sports_schedules AS b ON a.`year` = b.`year`
+                                                   AND a.term = b.term
+                                                   AND a.campus = b.campus
+                                                   AND a.section = b.section
+                                                   AND b.is_del = 0
+            INNER JOIN zc_sports_course AS c ON b.course_id = c.id
+            INNER JOIN zc_sports_site AS d ON c.site_id = d.id
+            INNER JOIN zc_user AS e ON b.teacher_uid = e.id
+            INNER JOIN zc_sports_config AS f ON a.`year` = f.`year`
+                                                AND a.term = f.term
         WHERE a.class_id = ${classId}
-          AND a.`year` = ${year}
-          AND a.term = ${term}
+              AND a.`year` = ${year}
+              AND a.term = ${term}
         ORDER BY class_id ASC
     </select>
 
     <!-- 获取选课时间 -->
     <select id="selectTimeList" resultType="com.zemcho.pe.controller.course.vo.SelectiveTimeVO">
-        SELECT campus,
-               start_time                AS 'start',
-               FROM_UNIXTIME(start_time) AS 'startTime',
-               end_time                  AS 'end',
-               FROM_UNIXTIME(end_time)   AS 'endTime'
+        SELECT
+            campus,
+            start_time                AS 'start',
+            FROM_UNIXTIME(start_time) AS 'startTime',
+            end_time                  AS 'end',
+            FROM_UNIXTIME(end_time)   AS 'endTime'
         FROM zc_sports_config_selection_time
         WHERE is_gregory_date = #{isGregory}
-          AND config_id = #{configId}
+              AND config_id = #{configId}
     </select>
 
     <!-- 获取选课配置 -->
@@ -56,18 +58,20 @@
         SELECT id
         FROM zc_sports_config
         WHERE year = #{year}
-          AND term = #{term}
+              AND term = #{term}
     </select>
 
     <!-- 获取课程可选数 -->
     <select id="selectCourseCountByYearAndTerm" resultType="com.zemcho.pe.controller.course.vo.CourseCountVO">
-        SELECT a.id AS 'courseId', a.limit_person AS 'count'
+        SELECT
+            a.id           AS 'courseId',
+            a.limit_person AS 'count'
         FROM zc_sports_schedules AS a
-                 INNER JOIN zc_sports_course AS b ON a.course_id = b.id
-                 INNER JOIN zc_sports_site AS c ON b.site_id = c.id
-                 INNER JOIN zc_user AS d ON a.teacher_uid = d.id
+            INNER JOIN zc_sports_course AS b ON a.course_id = b.id
+            INNER JOIN zc_sports_site AS c ON b.site_id = c.id
+            INNER JOIN zc_user AS d ON a.teacher_uid = d.id
         WHERE a.`year` = ${year}
-          AND a.term = ${term}
+              AND a.term = ${term}
         ORDER BY a.id
     </select>
 
@@ -86,26 +90,28 @@
                                                status,
                                                is_del)
         VALUES (#{year},
-                #{term},
-                #{uid},
-                #{schId},
-                #{classId},
-                #{phone},
-                #{remark},
-                #{operateType},
-                #{createTime},
-                #{updateTime},
-                #{status},
+            #{term},
+            #{uid},
+            #{schId},
+            #{classId},
+            #{phone},
+            #{remark},
+            #{operateType},
+            #{createTime},
+            #{updateTime},
+            #{status},
                 #{isDel})
     </insert>
 
     <!-- 选择选课记录 -->
     <select id="selectSelectedCourseRecord" resultType="com.zemcho.pe.controller.course.vo.SelectCourseRecordVO">
-        SELECT sch_id AS 'schId', is_del AS 'isDel'
+        SELECT
+            sch_id AS 'schId',
+            is_del AS 'isDel'
         FROM zc_sports_stu_success_sch
         WHERE id = #{id}
-          AND uid = #{uid}
-          AND is_del = 0
+              AND uid = #{uid}
+              AND is_del = 0
     </select>
 
     <!-- 取消选课 -->
@@ -113,32 +119,42 @@
         UPDATE zc_sports_stu_success_sch
         SET is_del = 1
         WHERE id = #{id}
-          AND uid = #{uid}
-          AND is_del = 0
+              AND uid = #{uid}
+              AND is_del = 0
     </update>
 
     <!-- 获取选课学生信息 -->
     <select id="selectUserInfoByCampusAndYearAndTerm" resultType="com.zemcho.pe.controller.course.vo.UserInfoVO">
-        SELECT a.campus,
-               b.uid,
-               c.username,
-               c.name,
-               c.type,
-               b.faculty,
-               b.class AS 'classId',
-               b.sex,
-               b.phone,
-               e.title AS 'classTitle',
-               e.grade,
-               d.title AS 'facultyTitle'
-        FROM zc_sports_class_section a
-                 INNER JOIN zc_user_detail AS b ON a.class_id = b.class
-                 INNER JOIN zc_user AS c ON b.uid = c.id
-                 INNER JOIN zc_faculty AS d ON b.faculty = d.id
-                 INNER JOIN zc_class AS e ON a.class_id = e.id
-        WHERE a.year = #{year}
-          AND a.term = #{term}
-        ORDER BY c.username ASC
+        SELECT
+            a.campus,
+            b.uid,
+            c.username,
+            c.NAME,
+            c.type,
+            b.faculty,
+            b.class AS 'classId',
+            b.sex,
+            b.phone,
+            e.title AS 'classTitle',
+            e.grade,
+            d.title AS 'facultyTitle'
+        FROM
+            (
+                SELECT *
+                FROM
+                    zc_sports_class_section
+                WHERE
+                    `year` = #{year}
+                    AND term = #{term}
+                GROUP BY
+                    class_id
+            ) AS a
+            INNER JOIN zc_user_detail AS b ON a.class_id = b.class
+            INNER JOIN zc_user AS c ON b.uid = c.id
+            INNER JOIN zc_faculty AS d ON b.faculty = d.id
+            INNER JOIN zc_class AS e ON a.class_id = e.id
+        ORDER BY
+            c.username ASC
     </select>
 
     <!-- 获取选课班级 -->
@@ -149,32 +165,34 @@
 
     <!-- 获取预览时间 -->
     <select id="selectPreviewTimeByYearAndTerm" resultType="com.zemcho.pe.controller.course.vo.PreviewTimeVO">
-        SELECT FROM_UNIXTIME(preview_start_time) AS 'previewStartTime',
-               FROM_UNIXTIME(preview_end_time)   AS 'previewEndTime'
+        SELECT
+            FROM_UNIXTIME(preview_start_time) AS 'previewStartTime',
+            FROM_UNIXTIME(preview_end_time)   AS 'previewEndTime'
         FROM zc_sports_config
         WHERE year = #{year}
-          AND term = #{term}
+              AND term = #{term}
     </select>
 
     <!-- 获取学生信息 -->
     <select id="selectUserInfoById" resultType="com.zemcho.pe.controller.course.vo.UserInfoVO">
-        SELECT a.campus,
-               b.uid,
-               c.username,
-               c.name,
-               c.type,
-               b.faculty,
-               b.class AS 'classId',
-               b.sex,
-               b.phone,
-               e.title AS 'classTitle',
-               e.grade,
-               d.title AS 'facultyTitle'
+        SELECT
+            a.campus,
+            b.uid,
+            c.username,
+            c.name,
+            c.type,
+            b.faculty,
+            b.class AS 'classId',
+            b.sex,
+            b.phone,
+            e.title AS 'classTitle',
+            e.grade,
+            d.title AS 'facultyTitle'
         FROM zc_sports_class_section a
-                 INNER JOIN zc_user_detail AS b ON a.class_id = b.class
-                 INNER JOIN zc_user AS c ON b.uid = c.id AND c.id = #{id}
-                 INNER JOIN zc_faculty AS d ON b.faculty = d.id
-                 INNER JOIN zc_class AS e ON a.class_id = e.id
+            INNER JOIN zc_user_detail AS b ON a.class_id = b.class
+            INNER JOIN zc_user AS c ON b.uid = c.id AND c.id = #{id}
+            INNER JOIN zc_faculty AS d ON b.faculty = d.id
+            INNER JOIN zc_class AS e ON a.class_id = e.id
     </select>
 
     <!-- 获取事务表单ID -->
@@ -198,11 +216,18 @@
 
     <!-- 获取选课成绩记录 -->
     <select id="selectCourseResultsByUid" resultType="com.zemcho.pe.entity.course.CourseResults">
-        SELECT id, year, term, campus, course_id AS 'courseId', teacher_uid AS 'teacherId', uid
+        SELECT
+            id,
+            year,
+            term,
+            campus,
+            course_id   AS 'courseId',
+            teacher_uid AS 'teacherId',
+            uid
         FROM zc_sports_stu_results
         WHERE uid = #{uid}
-          AND year = #{year}
-          AND term = #{term}
+              AND year = #{year}
+              AND term = #{term}
     </select>
 
     <!-- 更新选课成绩记录 -->
@@ -213,7 +238,7 @@
             teacher_uid = #{teacherId},
             update_time = #{updateTime}
         WHERE id = #{id}
-          AND uid = #{uid}
+              AND uid = #{uid}
     </update>
 
     <!-- 保存事务日志 -->
@@ -228,8 +253,57 @@
         SET course_num  = #{courseNumber},
             update_time = #{updateTime}
         WHERE class_id = #{classId}
-          AND year = #{year}
-          AND term = #{term}
+              AND year = #{year}
+              AND term = #{term}
     </update>
+
+    <select id="deleteFormLog" resultType="java.lang.Integer">
+        DELETE
+        FROM
+            zc_form_log
+        WHERE
+            form_id = (
+                SELECT form_id
+                FROM
+                    zc_form_config
+                WHERE
+                    `code` = 'sports_course_select'
+            )
+            AND create_at >= #{time}
+    </select>
+
+    <select id="deleteCourseResults" resultType="java.lang.Integer">
+        DELETE
+        FROM
+            zc_sports_stu_results
+        WHERE
+            `year` = #{year}
+            AND term = #{term}
+            AND create_time >= #{time}
+    </select>
+
+    <select id="deleteCourseRecord" resultType="java.lang.Integer">
+        DELETE
+        FROM
+            zc_sports_stu_success_sch
+        WHERE
+            `year` = #{year}
+            AND term = #{term}
+            AND create_time >= #{time}
+    </select>
+
+    <select id="deleteCourseLog" resultType="java.lang.Integer">
+        DELETE
+        FROM
+            zc_sports_course_selection_log
+        WHERE
+            create_time >= #{time}
+    </select>
+
+    <select id="resetCourseNumber" resultType="java.lang.Integer">
+        UPDATE zc_sports_class_list
+        SET course_num = 0
+        WHERE `year` = #{year} AND term = #{term}
+    </select>
 
 </mapper>
